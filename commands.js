@@ -44,6 +44,15 @@ const CHALLENGE_COMMAND = {
   contexts: [0, 2],
 };
 
-const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND];
+// test modif commande
+const TESTMODIF_COMMAND = {
+  name: 'julientest',
+  description: 'test goofy',
+  type: 1,
+  integration_types: [0, 1],
+  contexts: [0, 1, 2],
+};
+
+const ALL_COMMANDS = [TEST_COMMAND, CHALLENGE_COMMAND, TESTMODIF_COMMAND];
 
 InstallGlobalCommands(process.env.APP_ID, ALL_COMMANDS);
