@@ -215,7 +215,7 @@ app.post('/interactions', verifyKeyMiddleware(process.env.PUBLIC_KEY), async fun
             ],
           },
         });
-        // Delete previous message
+        // Delete previous message test
         await DiscordRequest(endpoint, { method: 'DELETE' });
       } catch (err) {
         console.error('Error sending message:', err);
