@@ -1,29 +1,55 @@
-const { Events } = require('discord.js');
+// Importation des modules nécessaires depuis discord.js
+const { Events, Collection } = require('discord.js');
 
 module.exports = {
+    // Définir le nom de l'événement
     name: Events.InteractionCreate,
+
+    /**
+     * Fonction d'exécution pour gérer l'événement de création d'interaction.
+     * @param {Interaction} interaction - L'objet interaction de Discord.js
+     */
     async execute(interaction) {
-        // Check if the interaction is a chat input command
+        // Vérifier si l'interaction est une commande de chat
         if (!interaction.isChatInputCommand()) return;
 
-        // Get the command from the client's command collection
+        // Récupérer la commande depuis la collection de commandes du client
         const command = interaction.client.commands.get(interaction.commandName);
 
+        // Si la commande n'existe pas, enregistrer une erreur et retourner
         if (!command) {
-            console.error(`No command matching ${interaction.commandName} was found.`);
+            console.error(`Aucune commande correspondant à ${interaction.commandName} n'a été trouvée.`);
             return;
         }
 
+        const { cooldowns } = interaction.client;
+        const now = Date.now();
+        const timestamps = cooldowns.get(command.data.name) || new Collection();
+        const cooldownAmount = (command.cooldown ?? 3) * 1_000;
+
+        if (timestamps.has(interaction.user.id)) {
+            const expirationTime = timestamps.get(interaction.user.id) + cooldownAmount;
+            if (now < expirationTime) {
+                const expiredTimestamp = Math.round(expirationTime / 1_000);
+                return interaction.reply({ content: `Veuillez patienter, vous êtes en période de recharge pour \`${command.data.name}\`. Vous pouvez l'utiliser à nouveau <t:${expiredTimestamp}:R>.`, ephemeral: true });
+            }
+        }
+
+        timestamps.set(interaction.user.id, now);
+        setTimeout(() => timestamps.delete(interaction.user.id), cooldownAmount);
+        cooldowns.set(command.data.name, timestamps);
+
         try {
-            // Execute the command
+            // Exécuter la commande
             await command.execute(interaction);
         } catch (error) {
+            // Enregistrer toutes les erreurs survenues lors de l'exécution de la commande
             console.error(error);
-            // Handle errors and send an error message to the user
+            const replyContent = 'Une erreur est survenue lors de l\'exécution de cette commande !';
             if (interaction.replied || interaction.deferred) {
-                await interaction.followUp({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.followUp({ content: replyContent, ephemeral: true });
             } else {
-                await interaction.reply({ content: 'There was an error while executing this command!', ephemeral: true });
+                await interaction.reply({ content: replyContent, ephemeral: true });
             }
         }
     },
