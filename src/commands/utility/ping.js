@@ -1,38 +1,42 @@
+// Importation des modules nécessaires
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
-const wait = require('node:timers/promises').setTimeout;
 
 module.exports = {
-    cooldown: 10,
+    // Délai de rechargement de la commande en secondes
+    cooldown: 5,
+    // Catégorie de la commande
+    category: 'utility',
+    // Données et options de la commande
     data: new SlashCommandBuilder()
         .setName('ping')
-        .setDescription('Replies with Pong!'),
+        .setDescription('Répond pong si le bot est en ligne.'),
+    // Logique d'exécution de la commande
     async execute(interaction) {
-        // Create buttons for Discord.js documentation and guide
-        const discordjsdoc = new ButtonBuilder()
-            .setLabel('Discord.jS Docs')
-            .setURL("https://discord.js.org/docs/packages/discord.js/14.16.3")
-            .setStyle(ButtonStyle.Link);
+        const start = Date.now();
 
-        const discordjsguide = new ButtonBuilder()
-            .setLabel('Discord.jS Guide')
-            .setURL("https://discordjs.guide/#before-you-begin")
-            .setStyle(ButtonStyle.Link);
-
-        // Create an action row and add the buttons to it
-        const row = new ActionRowBuilder()
-            .addComponents(discordjsdoc, discordjsguide);
-
-        // Defer the reply to the interaction
+        // Différer la réponse à l'interaction
         await interaction.deferReply({ ephemeral: true });
-        const reply = await interaction.fetchReply();
 
-        // Edit the reply with the latency information
-        interaction.editReply({
-            content: `Pong: ${interaction.user} | Latence: ${reply.createdTimestamp - interaction.createdTimestamp}ms`
+        // Créer les boutons menant à la documentation et au guide de Discord.js
+        const row = new ActionRowBuilder().addComponents(
+            new ButtonBuilder()
+                .setLabel('Discord.jS Docs')
+                .setURL("https://discord.js.org/docs/packages/discord.js/14.16.3")
+                .setStyle(ButtonStyle.Link),
+            new ButtonBuilder()
+                .setLabel('Discord.jS Guide')
+                .setURL("https://discordjs.guide/#before-you-begin")
+                .setStyle(ButtonStyle.Link)
+        );
+
+        // Modifier la réponse avec le temps de réponse et les boutons
+        await interaction.editReply({
+            content: `Pong: ${interaction.user} | en: ${Date.now() - start}ms`,
+            components: [row]
         });
 
-        // Wait for 10 seconds and then delete the reply
-        await wait(10_000);
-        interaction.deleteReply();
+        // Optionnellement attendre et supprimer la réponse
+        //await wait(10_000);
+        //interaction.deleteReply();
     },
 };

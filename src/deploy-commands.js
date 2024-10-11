@@ -1,49 +1,69 @@
-const { REST, Routes } = require('discord.js');
+// Importation des modules nécessaires
+const { REST, Routes, Collection } = require('discord.js');
 const fs = require('node:fs');
 const path = require('node:path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
-// Create a new REST instance and set the token
-const rest = new REST().setToken(process.env.TOKEN);
+module.exports = async (client) => {
+    // Initialiser le client REST avec le token du bot
+    const rest = new REST().setToken(process.env.TOKEN);
 
-// Delete all existing application commands
-rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: [] })
-    .then(() => console.log('Successfully deleted all application commands.'))
-    .catch(console.error);
+    // Initialiser les collections pour les cooldowns et les commandes
+    client.cooldowns = new Collection();
+    client.commands = new Collection();
 
-const commands = [];
-// Path to the commands folder
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+    // Tableau pour stocker les données des commandes à déployer
+    const commands = [];
+    // Chemin vers le répertoire des commandes
+    const foldersPath = path.join(__dirname, 'commands');
+    const commandFolders = fs.readdirSync(foldersPath);
 
-// Load command files and prepare them for deployment
-for (const folder of commandFolders) {
-    const commandsPath = path.join(foldersPath, folder);
-    const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-    for (const file of commandFiles) {
-        const filePath = path.join(commandsPath, file);
-        const command = require(filePath);
-        if ('data' in command && 'execute' in command) {
-            commands.push(command.data.toJSON());
-        } else {
-            console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+    /**
+     * Charger toutes les commandes du répertoire 'commands'.
+     * Les commandes valides doivent avoir des propriétés 'data' et 'execute'.
+     */
+    async function loadAllCommands() {
+        for (const folder of commandFolders) {
+            const commandsPath = path.join(foldersPath, folder);
+            const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+            for (const file of commandFiles) {
+                const command = require(path.join(commandsPath, file));
+                if ('data' in command && 'execute' in command) {
+                    commands.push(command.data.toJSON());
+                    client.commands.set(command.data.name, command);
+                } else {
+                    console.log(`[AVERTISSEMENT] La commande à ${file} manque d'une propriété "data" ou "execute" requise.`);
+                }
+            }
+        }
+        console.log('Commandes (/) chargées avec succès.');
+    }
+
+    /**
+     * Déployer toutes les commandes d'application (/) chargées sur Discord.
+     */
+    async function deployAllCommands() {
+        try {
+            const data = await rest.put(
+                Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID), // trouver une méthode pour le faire sur toutes les guildes
+                { body: commands },
+            );
+            console.log(`${data.length} commandes (/) déployées avec succès.`);
+        } catch (error) {
+            console.error('Erreur lors du déploiement des commandes :', error);
+            throw error;
         }
     }
-}
 
-// Deploy the commands
-(async () => {
+    // Exécuter le processus de déploiement des commandes
     try {
-        console.log(`Started refreshing ${commands.length} application (/) commands.`);
-
-        // Refresh all commands in the guild with the current set
-        const data = await rest.put(
-            Routes.applicationGuildCommands(process.env.CLIENT_ID, process.env.GUILD_ID),
-            { body: commands },
-        );
-
-        console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+        await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: [] });
+        console.log('Toutes les commandes ont été supprimées avec succès.');
+        await loadAllCommands();
+        await deployAllCommands();
+        console.log(`Déploiement des commandes terminé !`);
     } catch (error) {
-        console.error(error);
+        console.error('Erreur lors du déploiement des commandes :', error);
+        throw error;
     }
-})();
+};
