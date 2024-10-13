@@ -6,17 +6,22 @@ module.exports = {
     category: 'login',
     data: new SlashCommandBuilder()
         .setName('login-moodle')
-        .setDescription('affiche le calendrier de Moodle.'),
+        .setDescription('affiche le calendrier de Moodle.')
+        .addStringOption(option =>
+            option.setName('url')
+                .setDescription("URL de votre calendrier Moodle")),
     async execute(interaction) {
         let start = Date.now();
+        const url = interaction.options.getString('url') ?? process.env.MOODLE_CALENDAR;
+
         await interaction.deferReply({ ephemeral: true });
 
         let moodleData;
         try {
-            moodleData = await getRawData(process.env.MOODLE_CALENDAR);
+            moodleData = await getRawData(url);
         } catch (error) {
             console.error('Error fetching Moodle data:', error);
-            return interaction.editReply({ content: 'Failed to fetch Moodle data.' });
+            return interaction.editReply({ content: 'Impossible de récuperer votre agenda Moodle.' });
         }
 
         let moodleDataUseable = getUseableData(moodleData);
@@ -77,18 +82,20 @@ function getUseableData(data, nb_date_page = 5) {
         }
 
         let useable_data_date = value["end"].toISOString().split('T')[0];
-        if (useable_data[cur_page][useable_data_date]) {
-            useable_data[cur_page][useable_data_date].push({
-                end: value['end'],
-                summary: value['summary'],
-                categories: value['categories']
-            });
-        } else {
-            useable_data[cur_page][useable_data_date] = [{
-                end: value['end'],
-                summary: value['summary'],
-                categories: value['categories']
-            }];
+        if (useable_data_date >= new Date().toISOString().split('T')[0]) {
+            if (useable_data[cur_page][useable_data_date]) {
+                useable_data[cur_page][useable_data_date].push({
+                    end: value['end'],
+                    summary: value['summary'],
+                    categories: value['categories']
+                });
+            } else {
+                useable_data[cur_page][useable_data_date] = [{
+                    end: value['end'],
+                    summary: value['summary'],
+                    categories: value['categories']
+                }];
+            }
         }
 
         if (Object.keys(useable_data[cur_page]).length >= nb_date_page) {
