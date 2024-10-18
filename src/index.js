@@ -8,6 +8,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
  * Elle déploie les commandes et les événements, puis connecte le client.
  */
 async function main() {
+    console.log(process.env.TOKEN);
     const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
     try {
