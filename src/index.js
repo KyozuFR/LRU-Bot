@@ -1,5 +1,6 @@
 // Importation des modules nécessaires
 const path = require('node:path');
+const Sequelize = require('sequelize');
 const { Client, GatewayIntentBits } = require('discord.js');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
@@ -25,23 +26,21 @@ async function main() {
             require('./deploy-events')(client)
         ]);
 
-    const Tags = sequelize.define('tags', {
-        name: {
+    const Tags = sequelize.define('LRUBOT', {
+        discordid: {
             type: Sequelize.STRING,
             unique: true,
         },
-        description: Sequelize.TEXT,
-        username: Sequelize.STRING,
-        usage_count: {
-            type: Sequelize.INTEGER,
-            defaultValue: 0,
-            allowNull: false,
-        },
+        moodlelink: Sequelize.TEXT,
+        lruid: Sequelize.STRING,
+        
     });
-
+    // une fois les test terminé, le mettre en client.onready
+    await Tags.sync(); // Crée la table si elle n'existe pas (pour la whipe out {force: true})
+        
 
         // Se connecter à Discord avec le token du bot
-        await client.login(process.env.TOKEN);
+    await client.login(process.env.TOKEN);
     } catch (error) {
         console.error('Erreur lors de l\'initialisation :', error);
     }
