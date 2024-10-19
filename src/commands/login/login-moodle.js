@@ -1,6 +1,8 @@
 const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ComponentType } = require('discord.js');
 const ical = require('ical');
 
+const { lruBot } = require('../../dbObjects.js')
+
 module.exports = {
     cooldown: 0,
     category: 'login',
