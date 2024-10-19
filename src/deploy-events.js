@@ -18,7 +18,6 @@ module.exports = async (client) => {
             const handler = (...args) => event.execute(...args);
             event.once ? client.once(event.name, handler) : client.on(event.name, handler);
         }
-        console.log('Événements chargés avec succès.');
         console.log(`Déploiement des événements terminé !`);
     } catch (error) {
         // Enregistrer et relancer toutes les erreurs rencontrées lors du chargement des événements
