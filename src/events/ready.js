@@ -17,6 +17,7 @@ module.exports = {
      * @param {Client} client - L'instance du client Discord.
      */
     execute(client) {
+        // Afficher un message dans la console lorsque le bot est prêt
         console.log(`Bot prêt ! Connecté en tant que ${client.user.tag}`);
     },
 };

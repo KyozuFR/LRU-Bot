@@ -7,8 +7,10 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 /**
  * Fonction principale pour initialiser et démarrer le client Discord bot.
  * Elle déploie les commandes et les événements, puis connecte le client.
+ * @throws {Error} - Si une erreur se produit lors de l'initialisation.
  */
 async function main() {
+    // Créer une nouvelle instance du client Discord avec les intentions nécessaires
     const client = new Client({ intents: [GatewayIntentBits.Guilds] });
 
     try {
@@ -22,8 +24,10 @@ async function main() {
         // Se connecter à Discord avec le token du bot
         await client.login(process.env.TOKEN);
     } catch (error) {
+        // Enregistrer et afficher les erreurs rencontrées lors de l'initialisation
         console.error('Erreur lors de l\'initialisation :', error);
     }
 }
 
+// Appeler la fonction principale pour démarrer le bot
 main();

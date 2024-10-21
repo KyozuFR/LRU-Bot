@@ -10,7 +10,11 @@ module.exports = {
     data: new SlashCommandBuilder()
         .setName('ping')
         .setDescription('Répond pong si le bot est en ligne.'),
-    // Logique d'exécution de la commande
+
+    /**
+     * Logique d'exécution de la commande.
+     * @param {Interaction} interaction - L'objet interaction de Discord.js
+     */
     async execute(interaction) {
         const start = Date.now();
 
