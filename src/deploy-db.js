@@ -11,7 +11,7 @@ module.exports = async () => {
         host: 'localhost',
         dialect: 'sqlite',
         logging: false,
-        storage: 'database.sqlite',
+        storage: '../database.sqlite',
     });
 
     // Charger le modèle 'lru-bot' et l'associer à l'instance Sequelize
