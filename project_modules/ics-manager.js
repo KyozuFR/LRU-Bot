@@ -35,6 +35,9 @@ function getJsonDataFromIcs(icsData, nbElmtPage) {
     let curElmt = 0;
     const now = Date.now();
 
+    //trié les données ICS par date (choix de classement par date de fin car compatible avec EDT et Moodle)
+    icsData = Object.values(icsData).sort((a, b) => new Date(a.end) - new Date(b.end));
+
     // Parcourir chaque événement dans les données ICS
     for (const event in icsData) {
         const eventEndDate = new Date(icsData[event].end).getTime();

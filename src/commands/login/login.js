@@ -1,23 +1,28 @@
 // Importation des modules nécessaires
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, EmbedBuilder  } = require('discord.js');
-const ical = require('ical');
+const { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, ComponentType } = require('discord.js');
+
+const { getIcsData, getJsonDataFromIcs } = require('../../../project_modules/ics-manager.js');
 
 module.exports = {
     // Délai de rechargement de la commande en secondes
-    cooldown: 5,
+    cooldown: 0,
     // Catégorie de la commande
     category: 'login',
     // Données et options de la commande
     data: new SlashCommandBuilder()
         .setName('login')
         .setDescription('login étudiant afin de scrap EDT')
-        .addStringOption(option => option.setName('username').setDescription('Nom d\'utilisateur').setRequired(true)),
-    // Logique d'exécution de la commande
-    async execute(interaction) {
-        const start = Date.now();
+        .addStringOption(option =>
+            option.setName('username')
+                .setDescription('Nom d\'utilisateur')
+                .setRequired(true)),
 
-        // Différer la réponse à l'interaction
-        await interaction.deferReply({ ephemeral: false });
+    /**
+     * Logique d'exécution de la commande.
+     * @param {Interaction} interaction - L'objet interaction de Discord.js
+     */
+    async execute(interaction) {
+        let start = Date.now();
 
         // Récupérer l'option de nom d'utilisateur de l'interaction
         const username = interaction.options.getString('username');
@@ -26,61 +31,83 @@ module.exports = {
         //lien calendrier université la rochelle
         const url = 'https://srv.lru.brno.fr/ics/' + username;
 
-        const Embed = new EmbedBuilder()
-            .setTitle(`${interaction.user.tag}`)
-            .setDescription(`${username} | Requete réalisé en: ${Date.now() - start}ms \n Cours:`)
-            .setColor(0x0099FF)
-            .setURL(`${url}`)
-            .setTimestamp()
-            .setFooter({ text: `Requete réalisé en: ${Date.now() - start}ms`, iconURL: 'https://www.univ-larochelle.fr/wp-content/uploads/png/logo-universite-de-la-rochelle-2X.png' });
+        // Différer la réponse à l'interaction
+        await interaction.deferReply({ ephemeral: false });
 
-
-
-        // Gérer le .ics afin d'afficher la journée en cours (brouillon de debug)
-        const ics = Object.values(await getData(url));
-        for (let i = 0; i < 10; i++) {
-            getJour(ics, i).forEach(event => {
-                const tempdate = new Date(event.start);
-                console.log(tempdate);
-                console.log(event);
-                Embed.addFields({name: `${tempdate.toDateString()}, ${tempdate.toTimeString()}`, value: `${event.summary}`, inline: false });
-            });
-
+        let EdtIcsData;
+        try {
+            EdtIcsData = await getIcsData(url);
+        } catch (error) {
+            console.error('Error fetching EDT data:', error);
+            return interaction.editReply({ content: 'Impossible de récuperer votre EDT.' });
         }
-        await interaction.editReply({
-            embeds: [Embed],
+
+        let EdtJsonData = getJsonDataFromIcs(EdtIcsData,5);
+
+        const previous = new ButtonBuilder()
+            .setCustomId('previous')
+            .setLabel('◀️')
+            .setStyle(ButtonStyle.Primary);
+
+        const next = new ButtonBuilder()
+            .setCustomId('next')
+            .setLabel('▶️')
+            .setStyle(ButtonStyle.Primary);
+
+        const row = new ActionRowBuilder().addComponents(previous, next);
+
+        let curPage = 1;
+
+        let message = await interaction.editReply({
+            embeds: [new EmbedBuilder()
+                .setColor(0x0099ff)
+                .setTitle(`Voici vos prochain cours ${interaction.user.displayName} ;)`)
+                .setDescription(`Page ${curPage}/${Object.keys(EdtJsonData).length}`)
+                .addFields(getFields(EdtJsonData, curPage))
+                .setTimestamp()
+                .setFooter({ text: `Requête réalisé en ${Date.now() - start}ms`, iconURL: 'https://images-ext-1.discordapp.net/external/kMhIi1qtRXShjyfpUaFtpeANp0CUby-IxgrbxN6JUhw/https/www.univ-larochelle.fr/wp-content/uploads/png/logo-universite-de-la-rochelle-2X.png' })
+            ],
+            components: [row]
         });
 
-        // Optionnellement attendre et supprimer la réponse
-        //await wait(10_000);
-        //interaction.deleteReply();
+        const collector = message.createMessageComponentCollector({ componentType: ComponentType.Button, time: 60_000 }); // attention : time ne se reset pas à chaque interaction
+
+        collector.on('collect', async i => {
+            start = Date.now();
+            if (i.customId === 'previous') {
+                curPage = Math.max(curPage - 1, 1);
+            } else if (i.customId === 'next') {
+                curPage = Math.min(curPage + 1, Object.keys(EdtJsonData).length);
+            }
+
+            await i.update({ embeds: [new EmbedBuilder()
+                    .setColor(0x0099ff)
+                    .setTitle(`Voici vos prochain cours ${interaction.user.displayName} ;)`)
+                    .setDescription(`Page ${curPage}/${Object.keys(EdtJsonData).length}`)
+                    .addFields(getFields(EdtJsonData, curPage))
+                    .setTimestamp()
+                    .setFooter({ text: `Requête réalisé en ${Date.now() - start}ms`, iconURL: 'https://images-ext-1.discordapp.net/external/kMhIi1qtRXShjyfpUaFtpeANp0CUby-IxgrbxN6JUhw/https/www.univ-larochelle.fr/wp-content/uploads/png/logo-universite-de-la-rochelle-2X.png' })
+                ],
+            });
+        });
     },
 };
 
-async function getData(url) {
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            await interaction.editReply({
-                content: `Erreur lors de la récupération des données: ${response.status}`,
-            });
-            throw new Error(`Response status: ${response.status}`);
-        }
-        return ical.parseICS(await response.text());
-    } catch (error) {
-        console.error(error.message);
+/**
+ * Crée les champs pour l'embed Discord à partir des données de l'EDT.
+ * @param {Object} jsonData - Les données de l'edt.
+ * @param {number} page - La page actuelle des données.
+ * @returns {Array<Object>} - Les champs pour l'embed Discord.
+ */
+function getFields(jsonData, page) {
+    let fields = [];
+
+    for (const [event] in jsonData[page]) {
+        fields.push({
+            name: String(jsonData[page][event].start),
+            value: `${jsonData[page][event].summary}`,
+            inline: false
+        });
     }
-}
-
-//fonction qui a partir du fichier ics retourne les cours de la journée
-function getJour(ics, jourapartirdjd) {
-    const debut = new Date();
-    const fin = new Date();
-    debut.setDate(debut.getDate() + jourapartirdjd);
-    fin.setDate(debut.getDate() + 1);
-
-    return ics.filter(event => {
-        const start = new Date(event.start);
-        return start >= debut && start < fin;
-    });
+    return fields;
 }

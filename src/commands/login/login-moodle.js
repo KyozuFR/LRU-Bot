@@ -14,7 +14,8 @@ module.exports = {
         .setDescription('affiche le calendrier de Moodle.')
         .addStringOption(option =>
             option.setName('url')
-                .setDescription("URL de votre calendrier Moodle")),
+                .setDescription("URL de votre calendrier Moodle")
+                .setRequired(true)),
 
     /**
      * Logique d'exécution de la commande.
