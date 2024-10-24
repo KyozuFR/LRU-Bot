@@ -10,7 +10,7 @@ module.exports = {
     category: 'login',
     // Données et options de la commande
     data: new SlashCommandBuilder()
-        .setName('login')
+        .setName('loginAff')
         .setDescription('login étudiant afin de scrap EDT')
         .addStringOption(option =>
             option.setName('username')

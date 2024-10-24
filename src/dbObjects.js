@@ -6,7 +6,7 @@ const sequelize = new Sequelize('database', 'username', 'password', {
     host: 'localhost',
     dialect: 'sqlite',
     logging: false,
-    storage: '../database.sqlite',
+    storage: 'database.sqlite',
 });
 
 // Charger le modèle 'lru-bot' et l'associer à l'instance Sequelize
