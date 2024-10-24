@@ -4,6 +4,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
+/**
+ * Fonction pour déployer les commandes d'application (/) pour le client Discord.
+ * @param {Client} client - L'instance du client Discord.
+ * @throws {Error} - Si une erreur se produit lors du déploiement des commandes.
+ */
 module.exports = async (client) => {
     // Initialiser le client REST avec le token du bot
     const rest = new REST().setToken(process.env.TOKEN);
@@ -32,7 +37,7 @@ module.exports = async (client) => {
                     commands.push(command.data.toJSON());
                     client.commands.set(command.data.name, command);
                 } else {
-                    console.log(`[AVERTISSEMENT] La commande à ${file} manque d'une propriété "data" ou "execute" requise.`);
+                    console.log(`[AVERTISSEMENT] La commande dans ${file} manque d'une propriété "data" ou "execute" requise.`);
                 }
             }
         }
@@ -57,8 +62,10 @@ module.exports = async (client) => {
 
     // Exécuter le processus de déploiement des commandes
     try {
+        // Supprimer toutes les commandes existantes
         await rest.put(Routes.applicationCommands(process.env.CLIENT_ID), { body: [] });
         console.log('Toutes les commandes ont été supprimées avec succès.');
+        // Charger et déployer les nouvelles commandes
         await loadAllCommands();
         await deployAllCommands();
         console.log(`Déploiement des commandes terminé !`);
