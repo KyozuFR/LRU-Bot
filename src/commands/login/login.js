@@ -40,36 +40,39 @@ module.exports = {
             await interaction.editReply('Something went wrong with adding a tag.');
         }
 
-        if (choice === 0) {
-            try {
-                const response = await fetch(argument);
-                if (response.ok) {
-                    await lruBot.update({ moodlelink: argument }, { where: { discordid: interaction.user.id } });
+        switch (choice) {
+            case 0:
+                try {
+                    const response = await fetch(argument);
+                    if (response.ok) {
+                        await lruBot.update({ moodlelink: argument }, { where: { discordid: interaction.user.id } });
 
-                    await interaction.editReply('Data updated.');
+                        await interaction.editReply('Moodle mit à jour.');
+                    }
+                    else {
+                        throw new Error(`Failed to fetch data. Response status: ${response.status}`);
+                    }
                 }
-                else {
-                    throw new Error(`Failed to fetch data. Response status: ${response.status}`);
+                catch (error) {
+                    await interaction.editReply('URL moodle non valide.');
                 }
-            }
-            catch (error) {
-                await interaction.editReply('Something went wrong with updating moodle.');
-            }
-        } else if (choice === 1) {
-            try {
-                const response = await fetch('https://srv.lru.brno.fr/ics/'+argument);
-                if (response.ok) {
-                    await lruBot.update({ lruid: argument }, { where: { discordid: interaction.user.id } });
+                break;
+            case 1:
+                try {
+                    const response = await fetch('https://srv.lru.brno.fr/ics/'+argument);
+                    if (response.ok) {
+                        await lruBot.update({ lruid: argument }, { where: { discordid: interaction.user.id } });
 
-                    await interaction.editReply('Data updated.');
+                        await interaction.editReply('Edt mit à jour.');
+                    }
+                    else {
+                        throw new Error(`Failed to fetch data. Response status: ${response.status}`);
+                    }
                 }
-                else {
-                    throw new Error(`Failed to fetch data. Response status: ${response.status}`);
+                catch (error) {
+                    await interaction.editReply('Identifiant edt non valide.');
                 }
-            }
-            catch (error) {
-                await interaction.editReply('Something went wrong with updating edt.');
-            }
+                break;
         }
     },
 };
