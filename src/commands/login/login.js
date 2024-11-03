@@ -1,7 +1,7 @@
 // Importation des modules nécessaires
 const { SlashCommandBuilder } = require('discord.js');
 
-const { lruBot } = require('../../dbObjects.js')
+const { users } = require('../../dbObjects.js')
 
 module.exports = {
     // Délai de rechargement de la commande en secondes
@@ -39,8 +39,8 @@ module.exports = {
         // Différer la réponse pour rendre l'interaction éphémère
         await interaction.deferReply({ ephemeral: true });
 
-        // Trouver ou créer une entrée dans la table lruBot pour l'utilisateur Discord
-        await lruBot.findOrCreate({
+        // Trouver ou créer une entrée dans la table users pour l'utilisateur Discord
+        await users.findOrCreate({
             where: { discordid: interaction.user.id },
             defaults: {
                 lruid: null,
@@ -57,7 +57,7 @@ module.exports = {
                     const response = await fetch(argument);
                     if (response.ok) {
                         // Mettre à jour le lien Moodle dans la base de données
-                        await lruBot.update({ moodlelink: argument }, { where: { discordid: interaction.user.id } });
+                        await users.update({ moodlelink: argument }, { where: { discordid: interaction.user.id } });
                         // Répondre à l'utilisateur que la mise à jour a réussi
                         await interaction.editReply('Moodle mis à jour.');
                     } else {
@@ -77,7 +77,7 @@ module.exports = {
                     const response = await fetch('https://srv.lru.brno.fr/ics/' + argument);
                     if (response.ok) {
                         // Mettre à jour l'identifiant EDT dans la base de données
-                        await lruBot.update({ lruid: argument }, { where: { discordid: interaction.user.id } });
+                        await users.update({ lruid: argument }, { where: { discordid: interaction.user.id } });
                         // Répondre à l'utilisateur que la mise à jour a réussi
                         await interaction.editReply('Edt mis à jour.');
                     } else {

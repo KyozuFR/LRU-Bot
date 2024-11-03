@@ -1,5 +1,5 @@
 const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder, ComponentType } = require('discord.js');
-const { lruBot } = require('../../dbObjects.js');
+const { users } = require('../../dbObjects.js');
 const { getIcsData, getJsonDataFromIcs } = require("../../../project_modules/ics-manager");
 
 module.exports = {
@@ -24,7 +24,7 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         // Vérifie si l'utilisateur est connecté
-        const user = await lruBot.findOne({ where: { discordid: interaction.user.id } });
+        const user = await users.findOne({ where: { discordid: interaction.user.id } });
         if (!user) {
             await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
             return;
