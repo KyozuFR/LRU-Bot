@@ -1,4 +1,5 @@
 // Importation des modules nécessaires
+const path = require('node:path');
 const Sequelize = require('sequelize');
 
 /**
@@ -11,11 +12,11 @@ module.exports = async () => {
         host: 'localhost',
         dialect: 'sqlite',
         logging: false,
-        storage: 'database.sqlite',
+        storage: path.resolve(__dirname, '../database.sqlite'),
     });
 
     // Charger le modèle 'lru-bot' et l'associer à l'instance Sequelize
-    require('./models/lru-bot.js')(sequelize, Sequelize.DataTypes);
+    require('./models/users.js')(sequelize, Sequelize.DataTypes);
 
     // Vérifier si l'option de forçage est activée via les arguments de la ligne de commande
     const force = process.argv.includes('--force') || process.argv.includes('-f');
