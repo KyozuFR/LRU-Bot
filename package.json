@@ -1,0 +1,17 @@
+{
+  "name": "lru-bot",
+  "version": "1.0.0",
+  "main": "src/app.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "Cerise sans malédiction",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "discord.js": "^14.16.3",
+    "dotenv": "^16.4.5",
+    "ical": "^0.8.0",
+    "sequelize": "^6.37.4",
+    "sqlite3": "^5.1.7"
+  }
+}

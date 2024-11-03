@@ -1,0 +1,6 @@
+node_modules
+.env
+.vscode
+.idea
+/database.sqlite
+.sqlite
