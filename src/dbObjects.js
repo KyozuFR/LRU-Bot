@@ -10,8 +10,11 @@ const sequelize = new Sequelize('database', 'username', 'password', {
     storage: path.resolve(__dirname, '../database.sqlite'),
 });
 
-// Charger le modèle 'lru-bot' et l'associer à l'instance Sequelize
+// Charger le modèle 'users' et l'associer à l'instance Sequelize
+const licences = require('./models/licences.js')(sequelize, Sequelize.DataTypes);
 const users = require('./models/users.js')(sequelize, Sequelize.DataTypes);
+const groups = require('./models/groups.js')(sequelize, Sequelize.DataTypes);
+const groups_users = require('./models/groups_users.js')(sequelize, Sequelize.DataTypes);
 
 // Exporter le modèle users pour l'utiliser dans d'autres parties de l'application
-module.exports = { users };
+module.exports = { users, groups, groups_users, licences, sequelize };
