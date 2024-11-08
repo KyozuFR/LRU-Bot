@@ -6,7 +6,7 @@ module.exports = {
     cooldown: 0,
     category: 'utility',
     data: new SlashCommandBuilder()
-        .setName('afficher')
+        .setName('display')
         .setDescription('Permet d\'afficher ton calendrier moodle/edt')
         .addIntegerOption(option =>
             option.setName('choix-login')
