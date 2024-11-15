@@ -26,7 +26,9 @@ module.exports = {
             await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
             return;
         }
-        getGroupeEtudiant(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`)
+
+        let test = await getGroupeEtudiant(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
+        console.log(test);
         await interaction.editReply(`bibipboop`);
     },
 };
@@ -44,13 +46,19 @@ async function getGroupeEtudiant(url) {
     let tab = [];
     for (const event in calendarData) {
         //vérifier que le nom de l'événement n'est pas déja dans tab
-        const tmp = calendarData[event].summary.split(";")[2].split("[");
-        if (tab.includes(tmp)) {
-            continue
+        let tmp = calendarData[event].summary.split(';');
+        tmp = tmp.slice(1,tmp.length).join(';');
+        const match = tmp.match(/\b(TD|TP|TEA)(_\w+)?\b/i);
+        if (match) {
+            console.log("Occurrence trouvée :", match);
+            tab.push(match[0]);// Affiche "TD"
+            // La valeur de match[0] est l'occurrence trouvée
+        } else {
+            console.log("Aucune occurrence trouvée.");
+            continue;
         }
-        tab.push(tmp);
         count++;
     }
-    console.log(tab);
+    return tab;
 
 }
