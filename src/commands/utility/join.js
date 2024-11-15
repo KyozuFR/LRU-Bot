@@ -43,18 +43,35 @@ async function getGroupeEtudiant(url) {
     }
     //console.log(calendarData);
     let count = 0;
-    let tab = [];
+    let tab = {};
     for (const event in calendarData) {
-        //vérifier que le nom de l'événement n'est pas déja dans tab
         let tmp = calendarData[event].summary.split(';');
         tmp = tmp.slice(1,tmp.length).join(';');
-        const match = tmp.match(/\b(TD|TP|TEA)(_\w+)?\b/i);
-        if (match) {
-            console.log("Occurrence trouvée :", match);
-            tab.push(match[0]);// Affiche "TD"
+        const regex = /\b(TD|TP|TEA)(_\w+\d?[a-zA-Z]?)?\b/g;
+
+        const matches = [];
+        let match;
+
+        while ((match = regex.exec(tmp)) !== null) {
+            matches.push(match[0]);  // Ajouter la correspondance trouvée dans le tableau
+        }
+        /*
+        Liste de chose a faire,
+        gérer le nombre de groupe diférent et si il est supérieur a 1, ne pas le prendre en compte
+        Une fois qu'on a le groupe on prend les éléments derrière le [ jusqu'au ; afin d'avoir le nom de la matière
+        on met les 2 dans un dictionaire et voila, on a les groupe et les matières
+         */
+        if (matches.length === 1) {
+            //console.log(matches);
+            tmp = tmp.split(';');
+            for (const findtd in tmp){
+                if (tmp[findtd].includes(matches[0])){
+                    //console.log(tmp[findtd]);
+                    tab[tmp[findtd].split('[')[0]] = matches[0];
+                }
+            }
             // La valeur de match[0] est l'occurrence trouvée
         } else {
-            console.log("Aucune occurrence trouvée.");
             continue;
         }
         count++;
