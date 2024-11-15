@@ -17,8 +17,8 @@ Bienvenue dans ce projet de **création d'un bot Discord en Js avec base de donn
 -  Tout d'abord, **télécharger notre projet sur GitLab** *si cela n'est pas déjà fait.*
 - Ensuite lier son bot au projet téléchargé dans le fichier .env en suivant la template.
 - Pour finir, **exécuter les commandes suivantes** dans le terminal à la racine du projet:
-  - **node npm install** (installation des packages)
-  - **node app.js** (exécution du bot)
+  - **npm install** (installation des packages)
+  - **node src/app.js** (exécution du bot)
 
 ## Usage
 Pour pouvoir utiliser ce bot, il faudra tout d'abord **effectuer la commande /login** sur le serveur où le bot se trouve pour pouvoir avoir accès à toutes ses fonctionnalités.
