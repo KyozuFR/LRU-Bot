@@ -21,8 +21,6 @@ module.exports = {
         // Différer la réponse à l'interaction
         await interaction.deferReply({ ephemeral: true });
 
-        await interaction.editReply(`bibipboop`);
-
         // recupère la liste des salons à destroy
         const content = fs.readFileSync(path.resolve(__dirname, '../../../reset.txt'), 'utf8').split(";").slice(0, -1);
 
@@ -32,7 +30,8 @@ module.exports = {
                 channel.delete();
             }
         }
-
         fs.writeFile(path.resolve(__dirname, '../../../reset.txt'), "", err => {});
+
+        await interaction.editReply(`Groupe supprimé`);
     },
 };
