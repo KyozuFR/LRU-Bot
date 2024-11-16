@@ -27,6 +27,7 @@ module.exports = {
             return;
         }
 
+        //laissé pour le merge pour montrer l'utilisation.
         let test = await getGroupeEtudiant(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
         console.log(test);
         await interaction.editReply(`bibipboop`);
@@ -41,41 +42,32 @@ async function getGroupeEtudiant(url) {
         await interaction.editReply(`Impossible de récuperer votre EDT'}.`);
         return;
     }
-    //console.log(calendarData);
-    let count = 0;
-    let tab = {};
+    let tabcours = {};
     for (const event in calendarData) {
+        //Je prend la saumaire de l'évenement et le sépare par catégorie
         let tmp = calendarData[event].summary.split(';');
-        tmp = tmp.slice(1,tmp.length).join(';');
+        //j'enlève la première partie qui ne m'intéresse pas
+        let tmpsplited = tmp.slice(1,tmp.length);
+        tmp = tmpsplited.join(';');
         const regex = /\b(TD|TP|TEA)(_\w+\d?[a-zA-Z]?)?\b/g;
-
         const matches = [];
         let match;
 
+        // Trouver toutes les occurrences du motif dans la chaîne
         while ((match = regex.exec(tmp)) !== null) {
             matches.push(match[0]);  // Ajouter la correspondance trouvée dans le tableau
         }
-        /*
-        Liste de chose a faire,
-        gérer le nombre de groupe diférent et si il est supérieur a 1, ne pas le prendre en compte
-        Une fois qu'on a le groupe on prend les éléments derrière le [ jusqu'au ; afin d'avoir le nom de la matière
-        on met les 2 dans un dictionaire et voila, on a les groupe et les matières
-         */
+        //si il n'y a qu'une occurences et donc une seul groupe la valeur est ajouté au dictionaire
         if (matches.length === 1) {
-            //console.log(matches);
-            tmp = tmp.split(';');
-            for (const findtd in tmp){
-                if (tmp[findtd].includes(matches[0])){
+            for (const findtd in tmpsplited){
+                if (tmpsplited[findtd].includes(matches[0])){
                     //console.log(tmp[findtd]);
-                    tab[tmp[findtd].split('[')[0]] = matches[0];
+                    tabcours[tmpsplited[findtd].split('[')[0]] = matches[0];
                 }
             }
             // La valeur de match[0] est l'occurrence trouvée
-        } else {
-            continue;
         }
-        count++;
     }
-    return tab;
+    return tabcours;
 
 }
