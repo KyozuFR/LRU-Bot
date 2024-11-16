@@ -35,9 +35,13 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName)
-
-        let liste_temporaire = {"cours1":"tp1", "cours2":"tp1",  "cours3":"tp2"};
-        await createChannels(interaction, liste_temporaire, newCategory);
+        const user = await users.findOne({ where: { discordid: interaction.user.id } });
+        if (!user) {
+            await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
+            return;
+        }
+        let liste_groupe = await getGroupeEtudiant(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
+        await createChannels(interaction, liste_groupe, newCategory);
 
         await interaction.editReply(`Groupe assigné`);
     },
