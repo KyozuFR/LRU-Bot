@@ -1,5 +1,5 @@
 // Importation des modules nécessaires
-const { ChannelType, SlashCommandBuilder } = require('discord.js');
+const { ChannelType, SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('node:fs');
 const path = require("node:path");
 const { getJsonDataFromIcs, getIcsData} = require("../../../project_modules/ics-manager");
@@ -48,33 +48,39 @@ module.exports = {
 };
 
 async function createCategory(interaction, categoryName) {
-    let existingCategory = await findChannelFromName(interaction, categoryName, ChannelType.GuildCategory);
-    if (existingCategory) {
-        return existingCategory;
+    let category = await findChannelFromName(interaction, categoryName, ChannelType.GuildCategory);
+    if (!category) {
+        category = await interaction.guild.channels.create({
+            name: categoryName,
+            type: ChannelType.GuildCategory,
+        });
+
+        fs.writeFile(path.resolve(__dirname, '../../../reset.txt'), category.id + ";", { flag: 'a+' }, err => {});
+
+        category.permissionOverwrites.create(category.guild.roles.everyone, { ViewChannel: false });
     }
 
-    let newCategory = await interaction.guild.channels.create({
-        name: categoryName,
-        type: ChannelType.GuildCategory,
-    });
+    category.permissionOverwrites.create(interaction.user, { ViewChannel: true });
 
-    fs.writeFile(path.resolve(__dirname, '../../../reset.txt'), newCategory.id + ";", { flag: 'a+' }, err => {});
-
-    return newCategory;
+    return category;
 }
 
 async function createChannels(interaction, listOfChannel, categoryParent) {
     for (let [course, group] of Object.entries(listOfChannel)) {
-        let existingChannel = await findChannelFromName(interaction, group + "-" + course, ChannelType.GuildText, categoryParent);
-        if (!existingChannel) {
-            let newChannel = await interaction.guild.channels.create({
+        let channel = await findChannelFromName(interaction, group + "-" + course, ChannelType.GuildText, categoryParent);
+        if (!channel) {
+            channel = await interaction.guild.channels.create({
                 name: group + "-" + course,
                 type: ChannelType.GuildText,
                 parent: categoryParent.id,
             });
 
-            fs.writeFile(path.resolve(__dirname, '../../../reset.txt'), newChannel.id+";", { flag: 'a+' }, err => {});
+            fs.writeFile(path.resolve(__dirname, '../../../reset.txt'), channel.id+";", { flag: 'a+' }, err => {});
+
+            channel.permissionOverwrites.create(channel.guild.roles.everyone, { ViewChannel: false });
         }
+
+        channel.permissionOverwrites.create(interaction.user, { ViewChannel: true });
     }
 }
 
