@@ -33,15 +33,14 @@ module.exports = {
 
         // Différer la réponse à l'interaction
         await interaction.deferReply({ ephemeral: true });
-
-        let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName)
         const user = await users.findOne({ where: { discordid: interaction.user.id } });
         if (!user) {
             await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
             return;
         }
-        let liste_groupe = await getGroupeEtudiant(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
-        await createChannels(interaction, liste_groupe, newCategory);
+        let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName);
+        let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
+        await createChannels(interaction, list_group, newCategory);
 
         await interaction.editReply(`Groupe assigné`);
     },
@@ -67,10 +66,16 @@ async function createCategory(interaction, categoryName) {
 
 async function createChannels(interaction, listOfChannel, categoryParent) {
     for (let [course, group] of Object.entries(listOfChannel)) {
-        let channel = await findChannelFromName(interaction, group + "-" + course, ChannelType.GuildText, categoryParent);
+        let newChannelName = `${group}-${course}`.toLowerCase() // Met en minuscule
+            .normalize("NFD") // Décompose les caractères accentués
+            .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
+            .replace(/[^a-z0-9_]+/g, '-') // Remplace tout ce qui n'est pas alphanumérique ou underscore par un tiret
+            .replace(/^-+|-+$/g, '');// Supprime les tirets en début et en fin de chaîne
+        console.log(newChannelName);
+        let channel = await findChannelFromName(interaction, newChannelName, ChannelType.GuildText, categoryParent);
         if (!channel) {
             channel = await interaction.guild.channels.create({
-                name: group + "-" + course,
+                name: newChannelName,
                 type: ChannelType.GuildText,
                 parent: categoryParent.id,
             });
@@ -95,10 +100,10 @@ async function findChannelFromName(interaction, name, objectType, categoryParent
             }
         }
     }
-    return false;
+    return null;
     }
 
-async function getGroupeEtudiant(url) {
+async function getStudentCourses(url) {
     let calendarData;
     try {
         calendarData = await getIcsData(url);
