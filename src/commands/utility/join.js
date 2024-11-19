@@ -2,8 +2,11 @@
 const { ChannelType, SlashCommandBuilder, PermissionsBitField } = require('discord.js');
 const fs = require('node:fs');
 const path = require("node:path");
-const { getJsonDataFromIcs, getIcsData} = require("../../../project_modules/ics-manager");
+const {getIcsData} = require("../../../project_modules/ics-manager");
 const { users } = require('../../dbObjects.js');
+const { groups } = require('../../dbObjects.js');
+const { groups_users } = require('../../dbObjects.js');
+const { licences } = require('../../dbObjects.js');
 
 module.exports = {
     // Délai de rechargement de la commande en secondes
@@ -38,8 +41,8 @@ module.exports = {
             await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
             return;
         }
-        let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName);
         let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
+        let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName);
         await createChannels(interaction, list_group, newCategory);
 
         await interaction.editReply(`Groupe assigné`);

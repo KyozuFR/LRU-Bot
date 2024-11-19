@@ -3,12 +3,15 @@ const Sequelize = require('sequelize');
 
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define('licences', {
-        id: {
+        name: {
             type: Sequelize.STRING,
             primaryKey: true,
             unique: true,
         },
-        name: Sequelize.STRING,
+        id: {
+            type: Sequelize.STRING,
+            unique: true,
+        },
         year: Sequelize.INTEGER,
     }, {
         // Désactiver les timestamps automatiques (createdAt, updatedAt)
