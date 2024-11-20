@@ -28,6 +28,15 @@ module.exports = {
      */
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
+        const user = await users.findOne({ where: { discordid: interaction.user.id } });
+        if (!user) {
+            await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
+            return;
+        }
+        if (await groups_users.findOne({ where: { user: interaction.user.id } })) {
+            await interaction.editReply('Vous êtes déjà associé à un groupe.');
+            return;
+        }
         const select = new StringSelectMenuBuilder()
             .setCustomId('selectLicence')
             .addOptions(
@@ -78,32 +87,17 @@ module.exports = {
                 await handleYearSelection(interaction, licenceName, licenceYear);
             }
         });
-        /*
-        const licenceName = interaction.options.getString('nom-licence');
-        const licenceYears = interaction.options.getInteger('annee');
-
-        // Différer la réponse à l'interaction
-        const user = await users.findOne({ where: { discordid: interaction.user.id } });
-        if (!user) {
-            await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
-            return;
-        }
-        let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
-        let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName);
-        await createChannels(interaction, list_group, newCategory);
-
-        await interaction.editReply(`Groupe assigné`);*/
     },
 };
 async function handleYearSelection(interaction, licenceName, licenceYear) {
     // Votre logique ici
     const user = await users.findOne({ where: { discordid: interaction.user.id } });
-    if (!user) {
-        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
-        return;
-    }
     let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
     let newCategory = await createCategory(interaction, licenceYear + " - " + licenceName);
+    await licences.update(
+        { id: newCategory.id },
+        { where: { name: licenceName, year: licenceYear.slice(-1) } }
+    );
     await createChannels(interaction, list_group, newCategory);
 
     await interaction.editReply(`Groupe assigné`);
@@ -133,7 +127,6 @@ async function createChannels(interaction, listOfChannel, categoryParent) {
             .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
             .replace(/[^a-z0-9_]+/g, '-') // Remplace tout ce qui n'est pas alphanumérique ou underscore par un tiret
             .replace(/^-+|-+$/g, '');// Supprime les tirets en début et en fin de chaîne
-        console.log(newChannelName);
         let channel = await findChannelFromName(interaction, newChannelName, ChannelType.GuildText, categoryParent);
         if (!channel) {
             channel = await interaction.guild.channels.create({
@@ -148,6 +141,11 @@ async function createChannels(interaction, listOfChannel, categoryParent) {
         }
 
         channel.permissionOverwrites.create(interaction.user, { ViewChannel: true });
+        await groups_users.create({ user: interaction.user.id, group: channel.id });
+        const existingGroup = await groups.findOne({ where: { id: channel.id } });
+        if (!existingGroup) {
+            await groups.create({id: channel.id, name: newChannelName});
+        }
     }
 }
 
