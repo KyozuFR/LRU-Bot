@@ -1,6 +1,8 @@
 // Importation des modules nécessaires
 const { ChannelType, SlashCommandBuilder, PermissionsBitField, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
-    ComponentType
+    ComponentType,
+    ButtonBuilder,
+    ButtonStyle
 } = require('discord.js');
 const fs = require('node:fs');
 const path = require("node:path");
@@ -27,48 +29,60 @@ module.exports = {
     async execute(interaction) {
         await interaction.deferReply({ ephemeral: true });
         const select = new StringSelectMenuBuilder()
-            .setCustomId('select')
+            .setCustomId('selectLicence')
             .addOptions(
                 new StringSelectMenuOptionBuilder()
-                    .setLabel('Option')
-                    .setValue('option')
+                    .setLabel('test1')
+                    .setValue('test1')
                     .setDescription('A selectable option')
                     .setEmoji('😍')
                     .setDefault(true),
                 new StringSelectMenuOptionBuilder()
-                    .setLabel('Option2')
-                    .setValue('option2')
+                    .setLabel('test2')
+                    .setValue('test2')
                     .setDescription('A selectable option2')
                     .setEmoji('🎮'),
             );
-        const select2 = new StringSelectMenuBuilder()
-            .setCustomId('select2')
-            .addOptions(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('L1')
-                    .setValue('L1')
-                    .setDefault(true),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('L2')
-                    .setValue('L2'),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('L3')
-                    .setValue('L3'),
-            );
+
 
         const row = new ActionRowBuilder()
             .addComponents(select);
-        const row2 = new ActionRowBuilder()
-            .addComponents(select2);
         const message = await interaction.editReply({
-            content: 'Choose your starter!',
-            components: [row, row2],
+            content: 'Renseignez votre licence et votre année',
+            components: [row],
         });
-        //en haut ça fonctionne
-        const collector = message.createMessageComponentCollector({ componentType: ComponentType.SelectMenu, time: 60_000 });
 
-        collector.on('collect', async i => {
-            await i.update({ content: select2.value+select, components: [] });
+        //en haut ça fonctionne
+
+        const selectCollector = message.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60_000 });
+        let licenceName;
+        let licenceYear;
+        selectCollector.on('collect', async i => {
+            if (i.customId === 'selectLicence') {
+                licenceName = i.values[0];
+                const select2 = new StringSelectMenuBuilder()
+                    .setCustomId('selectYear')
+                    .addOptions(
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('L1')
+                            .setValue('L1')
+                            .setDefault(true),
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('L2')
+                            .setValue('L2'),
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('L3')
+                            .setValue('L3'),
+                    );
+                const row2 = new ActionRowBuilder()
+                    .addComponents(select2);
+                await i.update({ content: `Licence sélectionnée : ${licenceName}`, components: [row2] });
+            }
+            if (i.customId === 'selectYear') {
+                licenceYear = i.values[0];
+                await i.update({ content: `Vous êtes en : ${licenceYear} ${licenceName}`, components: [] });
+                //coder ici
+            }
         });
         /*
         const licenceName = interaction.options.getString('nom-licence');
