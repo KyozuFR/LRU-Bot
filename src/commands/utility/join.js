@@ -1,9 +1,16 @@
 // Importation des modules nécessaires
-const { ChannelType, SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { ChannelType, SlashCommandBuilder, PermissionsBitField, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
+    ComponentType,
+    ButtonBuilder,
+    ButtonStyle
+} = require('discord.js');
 const fs = require('node:fs');
 const path = require("node:path");
-const { getJsonDataFromIcs, getIcsData} = require("../../../project_modules/ics-manager");
+const {getIcsData} = require("../../../project_modules/ics-manager");
 const { users } = require('../../dbObjects.js');
+const { groups } = require('../../dbObjects.js');
+const { groups_users } = require('../../dbObjects.js');
+const { licences } = require('../../dbObjects.js');
 
 module.exports = {
     // Délai de rechargement de la commande en secondes
@@ -13,40 +20,88 @@ module.exports = {
     // Données et options de la commande
     data: new SlashCommandBuilder()
         .setName('join')
-        .setDescription('.')
-        .addStringOption(option =>
-            option.setName('nom-licence')
-                .setDescription('Le nom de votre licence')
-                .setRequired(true))
-        .addIntegerOption(option =>
-            option.setName('annee')
-                .setDescription('Votre année universitaire')
-                .setRequired(true)),
+        .setDescription('.'),
 
     /**
      * Logique d'exécution de la commande.
      * @param {Interaction} interaction - L'objet interaction de Discord.js
      */
     async execute(interaction) {
-        const licenceName = interaction.options.getString('nom-licence');
-        const licenceYears = interaction.options.getInteger('annee');
-
-        // Différer la réponse à l'interaction
         await interaction.deferReply({ ephemeral: true });
-
-        let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName)
         const user = await users.findOne({ where: { discordid: interaction.user.id } });
         if (!user) {
             await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
             return;
         }
-        let liste_groupe = await getGroupeEtudiant(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
-        await createChannels(interaction, liste_groupe, newCategory);
+        if (await groups_users.findOne({ where: { user: interaction.user.id } })) {
+            await interaction.editReply('Vous êtes déjà associé à un groupe.');
+            return;
+        }
+        const select = new StringSelectMenuBuilder()
+            .setCustomId('selectLicence')
+            .addOptions(
+                [...new Set((await licences.findAll()).map(licence => licence.name))].map(name =>
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel(name)
+                        .setValue(name)
+                        .setDescription(`Licence: ${name}`)
+                )
+            );
 
-        await interaction.editReply(`Groupe assigné`);
+
+        const row = new ActionRowBuilder()
+            .addComponents(select);
+        const message = await interaction.editReply({
+            content: 'Renseignez votre licence',
+            components: [row],
+        });
+
+        //en haut ça fonctionne
+
+        const selectCollector = message.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60_000 });
+        let licenceName;
+        let licenceYear;
+        selectCollector.on('collect', async i => {
+            if (i.customId === 'selectLicence') {
+                licenceName = i.values[0];
+                const select2 = new StringSelectMenuBuilder()
+                    .setCustomId('selectYear')
+                    .addOptions(
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('L1')
+                            .setValue('L1'),
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('L2')
+                            .setValue('L2'),
+                        new StringSelectMenuOptionBuilder()
+                            .setLabel('L3')
+                            .setValue('L3'),
+                    );
+                const row2 = new ActionRowBuilder()
+                    .addComponents(select2);
+                await i.update({ content: `Licence sélectionnée : ${licenceName}`, components: [row2] });
+            }
+            if (i.customId === 'selectYear') {
+                licenceYear = i.values[0];
+                await i.update({ content: `Vous êtes en : ${licenceYear} ${licenceName}`, components: [] });
+                await handleYearSelection(interaction, licenceName, licenceYear);
+            }
+        });
     },
 };
+async function handleYearSelection(interaction, licenceName, licenceYear) {
+    // Votre logique ici
+    const user = await users.findOne({ where: { discordid: interaction.user.id } });
+    let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
+    let newCategory = await createCategory(interaction, licenceYear + " - " + licenceName);
+    await licences.update(
+        { id: newCategory.id },
+        { where: { name: licenceName, year: licenceYear.slice(-1) } }
+    );
+    await createChannels(interaction, list_group, newCategory);
 
+    await interaction.editReply(`Groupe assigné`);
+}
 async function createCategory(interaction, categoryName) {
     let category = await findChannelFromName(interaction, categoryName, ChannelType.GuildCategory);
     if (!category) {
@@ -67,10 +122,15 @@ async function createCategory(interaction, categoryName) {
 
 async function createChannels(interaction, listOfChannel, categoryParent) {
     for (let [course, group] of Object.entries(listOfChannel)) {
-        let channel = await findChannelFromName(interaction, group + "-" + course, ChannelType.GuildText, categoryParent);
+        let newChannelName = `${group}-${course}`.toLowerCase() // Met en minuscule
+            .normalize("NFD") // Décompose les caractères accentués
+            .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
+            .replace(/[^a-z0-9_]+/g, '-') // Remplace tout ce qui n'est pas alphanumérique ou underscore par un tiret
+            .replace(/^-+|-+$/g, '');// Supprime les tirets en début et en fin de chaîne
+        let channel = await findChannelFromName(interaction, newChannelName, ChannelType.GuildText, categoryParent);
         if (!channel) {
             channel = await interaction.guild.channels.create({
-                name: group + "-" + course,
+                name: newChannelName,
                 type: ChannelType.GuildText,
                 parent: categoryParent.id,
             });
@@ -81,6 +141,11 @@ async function createChannels(interaction, listOfChannel, categoryParent) {
         }
 
         channel.permissionOverwrites.create(interaction.user, { ViewChannel: true });
+        await groups_users.create({ user: interaction.user.id, group: channel.id });
+        const existingGroup = await groups.findOne({ where: { id: channel.id } });
+        if (!existingGroup) {
+            await groups.create({id: channel.id, name: newChannelName});
+        }
     }
 }
 
@@ -95,10 +160,10 @@ async function findChannelFromName(interaction, name, objectType, categoryParent
             }
         }
     }
-    return false;
+    return null;
     }
 
-async function getGroupeEtudiant(url) {
+async function getStudentCourses(url) {
     let calendarData;
     try {
         calendarData = await getIcsData(url);
