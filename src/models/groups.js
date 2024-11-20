@@ -1,14 +1,15 @@
-// Importation des modules nécessaires
-const Sequelize = require('sequelize');
-
 module.exports = (sequelize, DataTypes) => {
     return sequelize.define('groups', {
         id: {
-            type: Sequelize.STRING,
-            primaryKey: true,
+            type: DataTypes.STRING,
+            allowNull: false,
             unique: true,
+            primaryKey: true,
         },
-        name: Sequelize.STRING,
+        name: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
     }, {
         // Désactiver les timestamps automatiques (createdAt, updatedAt)
         timestamps: false,
