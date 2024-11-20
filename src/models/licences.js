@@ -6,13 +6,15 @@ module.exports = (sequelize, DataTypes) => {
         name: {
             type: Sequelize.STRING,
             primaryKey: true,
-            unique: true,
         },
         id: {
             type: Sequelize.STRING,
             unique: true,
         },
-        year: Sequelize.INTEGER,
+        year: {
+            type: Sequelize.INTEGER,
+            primaryKey: true,
+        }
     }, {
         // Désactiver les timestamps automatiques (createdAt, updatedAt)
         timestamps: false,

@@ -31,24 +31,19 @@ module.exports = {
         const select = new StringSelectMenuBuilder()
             .setCustomId('selectLicence')
             .addOptions(
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('test1')
-                    .setValue('test1')
-                    .setDescription('A selectable option')
-                    .setEmoji('😍')
-                    .setDefault(true),
-                new StringSelectMenuOptionBuilder()
-                    .setLabel('test2')
-                    .setValue('test2')
-                    .setDescription('A selectable option2')
-                    .setEmoji('🎮'),
+                [...new Set((await licences.findAll()).map(licence => licence.name))].map(name =>
+                    new StringSelectMenuOptionBuilder()
+                        .setLabel(name)
+                        .setValue(name)
+                        .setDescription(`Licence: ${name}`)
+                )
             );
 
 
         const row = new ActionRowBuilder()
             .addComponents(select);
         const message = await interaction.editReply({
-            content: 'Renseignez votre licence et votre année',
+            content: 'Renseignez votre licence',
             components: [row],
         });
 
@@ -65,8 +60,7 @@ module.exports = {
                     .addOptions(
                         new StringSelectMenuOptionBuilder()
                             .setLabel('L1')
-                            .setValue('L1')
-                            .setDefault(true),
+                            .setValue('L1'),
                         new StringSelectMenuOptionBuilder()
                             .setLabel('L2')
                             .setValue('L2'),
@@ -81,7 +75,7 @@ module.exports = {
             if (i.customId === 'selectYear') {
                 licenceYear = i.values[0];
                 await i.update({ content: `Vous êtes en : ${licenceYear} ${licenceName}`, components: [] });
-                //coder ici
+                await handleYearSelection(interaction, licenceName, licenceYear);
             }
         });
         /*
@@ -101,7 +95,19 @@ module.exports = {
         await interaction.editReply(`Groupe assigné`);*/
     },
 };
+async function handleYearSelection(interaction, licenceName, licenceYear) {
+    // Votre logique ici
+    const user = await users.findOne({ where: { discordid: interaction.user.id } });
+    if (!user) {
+        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
+        return;
+    }
+    let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
+    let newCategory = await createCategory(interaction, licenceYear + " - " + licenceName);
+    await createChannels(interaction, list_group, newCategory);
 
+    await interaction.editReply(`Groupe assigné`);
+}
 async function createCategory(interaction, categoryName) {
     let category = await findChannelFromName(interaction, categoryName, ChannelType.GuildCategory);
     if (!category) {
