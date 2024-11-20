@@ -1,5 +1,7 @@
 // Importation des modules nécessaires
-const { ChannelType, SlashCommandBuilder, PermissionsBitField } = require('discord.js');
+const { ChannelType, SlashCommandBuilder, PermissionsBitField, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuOptionBuilder,
+    ComponentType
+} = require('discord.js');
 const fs = require('node:fs');
 const path = require("node:path");
 const {getIcsData} = require("../../../project_modules/ics-manager");
@@ -16,26 +18,63 @@ module.exports = {
     // Données et options de la commande
     data: new SlashCommandBuilder()
         .setName('join')
-        .setDescription('.')
-        .addStringOption(option =>
-            option.setName('nom-licence')
-                .setDescription('Le nom de votre licence')
-                .setRequired(true))
-        .addIntegerOption(option =>
-            option.setName('annee')
-                .setDescription('Votre année universitaire')
-                .setRequired(true)),
+        .setDescription('.'),
 
     /**
      * Logique d'exécution de la commande.
      * @param {Interaction} interaction - L'objet interaction de Discord.js
      */
     async execute(interaction) {
+        await interaction.deferReply({ ephemeral: true });
+        const select = new StringSelectMenuBuilder()
+            .setCustomId('select')
+            .addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Option')
+                    .setValue('option')
+                    .setDescription('A selectable option')
+                    .setEmoji('😍')
+                    .setDefault(true),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('Option2')
+                    .setValue('option2')
+                    .setDescription('A selectable option2')
+                    .setEmoji('🎮'),
+            );
+        const select2 = new StringSelectMenuBuilder()
+            .setCustomId('select2')
+            .addOptions(
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('L1')
+                    .setValue('L1')
+                    .setDefault(true),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('L2')
+                    .setValue('L2'),
+                new StringSelectMenuOptionBuilder()
+                    .setLabel('L3')
+                    .setValue('L3'),
+            );
+
+        const row = new ActionRowBuilder()
+            .addComponents(select);
+        const row2 = new ActionRowBuilder()
+            .addComponents(select2);
+        const message = await interaction.editReply({
+            content: 'Choose your starter!',
+            components: [row, row2],
+        });
+        //en haut ça fonctionne
+        const collector = message.createMessageComponentCollector({ componentType: ComponentType.SelectMenu, time: 60_000 });
+
+        collector.on('collect', async i => {
+            await i.update({ content: select2.value+select, components: [] });
+        });
+        /*
         const licenceName = interaction.options.getString('nom-licence');
         const licenceYears = interaction.options.getInteger('annee');
 
         // Différer la réponse à l'interaction
-        await interaction.deferReply({ ephemeral: true });
         const user = await users.findOne({ where: { discordid: interaction.user.id } });
         if (!user) {
             await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
@@ -45,7 +84,7 @@ module.exports = {
         let newCategory = await createCategory(interaction, "L"+licenceYears+" - "+licenceName);
         await createChannels(interaction, list_group, newCategory);
 
-        await interaction.editReply(`Groupe assigné`);
+        await interaction.editReply(`Groupe assigné`);*/
     },
 };
 

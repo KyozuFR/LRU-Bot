@@ -20,8 +20,6 @@ async function main() {
             require('./deploy-events')(client),
             require('./deploy-db')(),
         ]);
-        //Insère les données essentielles à la bdd si elles n'y sont pas
-        await require('./seed/seed-licences')();
 
         // Se connecter à Discord avec le token du bot
         await client.login(process.env.TOKEN);
