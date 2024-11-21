@@ -15,11 +15,19 @@ module.exports = async () => {
         storage: path.resolve(__dirname, '../database.sqlite'),
     });
 
-    // Charger le modèle 'lru-bot' et l'associer à l'instance Sequelize
-    require('./models/licences.js')(sequelize, Sequelize.DataTypes);
-    require('./models/users.js')(sequelize, Sequelize.DataTypes);
-    require('./models/groups.js')(sequelize, Sequelize.DataTypes);
-    require('./models/groups_users.js')(sequelize, Sequelize.DataTypes);
+    // Charger le modèle 'users' et l'associer à l'instance Sequelize
+    const licences = require('./models/licences.js')(sequelize, Sequelize.DataTypes);
+    const users = require('./models/users.js')(sequelize, Sequelize.DataTypes, licences);
+    const groups = require('./models/groups.js')(sequelize, Sequelize.DataTypes);
+    const groups_users = require('./models/groups_users.js')(sequelize, Sequelize.DataTypes, users, groups);
+
+    licences.hasMany(users, { foreignKey: 'licencename' });
+    licences.hasMany(users, { foreignKey: 'licenceyear' });
+    users.belongsTo(licences, { foreignKey: 'licencename' });
+    users.belongsTo(licences, { foreignKey: 'licenceyear' });
+
+    users.belongsToMany(groups, { through: groups_users, foreignKey: 'user' });
+    groups.belongsToMany(users, { through: groups_users, foreignKey: 'group' });
 
     // Vérifier si l'option de forçage est activée via les arguments de la ligne de commande
     const force = process.argv.includes('--force') || process.argv.includes('-f');

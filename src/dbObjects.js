@@ -16,11 +16,5 @@ const users = require('./models/users.js')(sequelize, Sequelize.DataTypes, licen
 const groups = require('./models/groups.js')(sequelize, Sequelize.DataTypes);
 const groups_users = require('./models/groups_users.js')(sequelize, Sequelize.DataTypes, users, groups);
 
-licences.hasMany(users, { foreignKey: 'licencename' });
-users.belongsTo(licences, { foreignKey: 'licencename' });
-
-users.belongsToMany(groups, { through: groups_users, foreignKey: 'user' });
-groups.belongsToMany(users, { through: groups_users, foreignKey: 'group' });
-
 // Exporter le modèle users pour l'utiliser dans d'autres parties de l'application
 module.exports = { users, groups, groups_users, licences, sequelize };

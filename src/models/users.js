@@ -1,4 +1,4 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, licences) => {
     return sequelize.define('users', {
         discordid: {
             type: DataTypes.STRING,
@@ -18,9 +18,11 @@ module.exports = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: true,
             references: {
-                model: 'licences',
+                model: licences,
                 key: 'name',
             },
+            onDelete: 'SET NULL',
+            onUpdate: 'RESTRICT',
         }
     }, {
         // Désactiver les timestamps automatiques (createdAt, updatedAt)

@@ -1,25 +1,26 @@
-module.exports = (sequelize, DataTypes) => {
+module.exports = (sequelize, DataTypes, users, groups) => {
     return sequelize.define('groups_users', {
-        id: {
-            type: DataTypes.INTEGER,
-            autoIncrement: true,
-            primaryKey: true,
-        },
         user: {
             type: DataTypes.STRING,
             allowNull: false,
             references: {
-                model: 'users',
+                model: users,
                 key: 'discordid',
             },
+            onDelete: 'CASCADE',
+            onUpdate: 'RESTRICT',
+            primaryKey: true,
         },
         group: {
             type: DataTypes.STRING,
             allowNull: false,
             references: {
-                model: 'groups',
+                model: groups,
                 key: 'id',
             },
+            onDelete: 'CASCADE',
+            onUpdate: 'RESTRICT',
+            primaryKey: true,
         },
     }, {
         // Désactiver les timestamps automatiques (createdAt, updatedAt)
