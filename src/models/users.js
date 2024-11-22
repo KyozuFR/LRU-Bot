@@ -14,6 +14,10 @@ module.exports = (sequelize, DataTypes) => {
         lruid: Sequelize.STRING,
         // Champ 'moodlelink' de type TEXT
         moodlelink: Sequelize.TEXT,
+        licenceid: {
+            type: Sequelize.INTEGER,
+            foreignKey: true,
+        }
     }, {
         // Désactiver les timestamps automatiques (createdAt, updatedAt)
         timestamps: false,

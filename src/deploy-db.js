@@ -16,7 +16,10 @@ module.exports = async () => {
     });
 
     // Charger le modèle 'lru-bot' et l'associer à l'instance Sequelize
+    require('./models/licences.js')(sequelize, Sequelize.DataTypes);
     require('./models/users.js')(sequelize, Sequelize.DataTypes);
+    require('./models/groups.js')(sequelize, Sequelize.DataTypes);
+    require('./models/groups_users.js')(sequelize, Sequelize.DataTypes);
 
     // Vérifier si l'option de forçage est activée via les arguments de la ligne de commande
     const force = process.argv.includes('--force') || process.argv.includes('-f');

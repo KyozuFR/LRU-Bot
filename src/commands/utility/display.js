@@ -6,7 +6,7 @@ module.exports = {
     cooldown: 0,
     category: 'utility',
     data: new SlashCommandBuilder()
-        .setName('afficher')
+        .setName('display')
         .setDescription('Permet d\'afficher ton calendrier moodle/edt')
         .addIntegerOption(option =>
             option.setName('choix-login')
@@ -31,7 +31,7 @@ module.exports = {
         }
 
         // Détermine l'URL du calendrier selon le choix
-        const url = choice === 0 ? user.moodlelink : `https://srv.lru.brno.fr/ics/${user.lruid}`;
+        const url = choice === 0 ? user.moodlelink : `https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`;
         const title = choice === 0 ? `Voici vos activité Moodle ${interaction.user.displayName} ;)` : `Voici vos prochain cours ${interaction.user.displayName} ;)`;
         const getFieldFunction = choice === 0 ? getFieldsMoodle : getFieldsEDT;
 

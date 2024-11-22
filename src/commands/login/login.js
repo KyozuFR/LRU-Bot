@@ -74,7 +74,7 @@ module.exports = {
                 // Si l'utilisateur a choisi EDT
                 try {
                     // Tenter de récupérer les données depuis l'URL générée avec l'identifiant fourni
-                    const response = await fetch('https://srv.lru.brno.fr/ics/' + argument);
+                    const response = await fetch('https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=' + argument);
                     if (response.ok) {
                         // Mettre à jour l'identifiant EDT dans la base de données
                         await users.update({ lruid: argument }, { where: { discordid: interaction.user.id } });
