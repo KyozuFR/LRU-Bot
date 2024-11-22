@@ -9,25 +9,47 @@ const Sequelize = require('sequelize');
 module.exports = async () => {
     // Initialiser une nouvelle instance de Sequelize avec les paramètres de connexion
     const sequelize = new Sequelize('database', 'username', 'password', {
-        host: 'localhost',
         dialect: 'sqlite',
-        logging: false,
         storage: path.resolve(__dirname, '../database.sqlite'),
+        logging: false,
     });
 
     // Charger le modèle 'users' et l'associer à l'instance Sequelize
     const licences = require('./models/licences.js')(sequelize, Sequelize.DataTypes);
-    const users = require('./models/users.js')(sequelize, Sequelize.DataTypes, licences);
+    const users = require('./models/users.js')(sequelize, Sequelize.DataTypes);
     const groups = require('./models/groups.js')(sequelize, Sequelize.DataTypes);
-    const groups_users = require('./models/groups_users.js')(sequelize, Sequelize.DataTypes, users, groups);
+    const groups_users = require('./models/groups_users.js')(sequelize, Sequelize.DataTypes);
 
-    licences.hasMany(users, { foreignKey: 'licencename' });
-    licences.hasMany(users, { foreignKey: 'licenceyear' });
-    users.belongsTo(licences, { foreignKey: 'licencename' });
-    users.belongsTo(licences, { foreignKey: 'licenceyear' });
+    // Relation de users -> licences
+    users.belongsTo(licences, {
+        foreignKey: 'licencename',
+        targetKey: 'name',
+        onUpdate: 'RESTRICT',
+        onDelete: 'SET NULL'
+    });
 
-    users.belongsToMany(groups, { through: groups_users, foreignKey: 'user' });
-    groups.belongsToMany(users, { through: groups_users, foreignKey: 'group' });
+    users.belongsTo(licences, {
+        foreignKey: 'licenceyear',
+        targetKey: 'year',
+        onUpdate: 'RESTRICT',
+        onDelete: 'SET NULL'
+    });
+
+    // Relation de groups_users -> users
+    groups_users.belongsTo(users, {
+        foreignKey: 'user_id',
+        targetKey: 'discordid',
+        onUpdate: 'RESTRICT',
+        onDelete: 'CASCADE'
+    });
+
+    // Relation de groups_users -> groups
+    groups_users.belongsTo(groups, {
+        foreignKey: 'group_id',
+        targetKey: 'id',
+        onUpdate: 'RESTRICT',
+        onDelete: 'CASCADE'
+    });
 
     // Vérifier si l'option de forçage est activée via les arguments de la ligne de commande
     const force = process.argv.includes('--force') || process.argv.includes('-f');

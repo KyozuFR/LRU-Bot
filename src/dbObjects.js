@@ -4,10 +4,9 @@ const Sequelize = require('sequelize');
 
 // Initialiser une nouvelle instance de Sequelize avec les paramètres de connexion
 const sequelize = new Sequelize('database', 'username', 'password', {
-    host: 'localhost',
     dialect: 'sqlite',
-    logging: false,
     storage: path.resolve(__dirname, '../database.sqlite'),
+    logging: false,
 });
 
 // Charger le modèle 'users' et l'associer à l'instance Sequelize
