@@ -117,6 +117,7 @@ async function createCategory(interaction, categoryName) {
 
     category.permissionOverwrites.create(interaction.user, { ViewChannel: true });
 
+    await users.update({ licenceid: category.id }, { where: { discordid: interaction.user.id } });
     return category;
 }
 

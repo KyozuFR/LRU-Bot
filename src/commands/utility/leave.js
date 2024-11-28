@@ -1,0 +1,51 @@
+// Importation des modules nécessaires
+const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ChannelType} = require('discord.js');
+const fs = require('node:fs');
+const path = require('node:path');
+const { groups_users } = require('../../dbObjects.js');
+const { users } = require('../../dbObjects.js');
+
+module.exports = {
+    // Délai de rechargement de la commande en secondes
+    cooldown: 5,
+    // Catégorie de la commande
+    category: 'utility',
+    // Données et options de la commande
+    data: new SlashCommandBuilder()
+        .setName('leave')
+        .setDescription('Quitte le groupe'),
+
+    /**
+     * Logique d'exécution de la commande.
+     * @param {Interaction} interaction - L'objet interaction de Discord.js
+     */
+    async execute(interaction) {
+        // Différer la réponse à l'interaction
+        await interaction.deferReply({ ephemeral: true });
+
+        const findgroupsuser = await groups_users.findAll({ where: { user: interaction.user.id } });
+        for (const group_user of findgroupsuser) {
+            let channel = await findChannelId(interaction, group_user.group, ChannelType.GuildText);
+            channel.permissionOverwrites.delete(interaction.user.id);
+        }
+        const finduserlicence = await users.findOne({ where: { discordid: interaction.user.id } });
+        let category = await findChannelId(interaction, finduserlicence.licenceid, ChannelType.GuildCategory);
+        await category.permissionOverwrites.delete(interaction.user.id);
+        await users.update({ licenceid: null }, { where: { discordid: interaction.user.id } });
+        await groups_users.destroy({where: {user: interaction.user.id}});
+
+
+
+        await interaction.editReply(`Groupe supprimé`);
+    },
+};
+
+async function findChannelId(interaction, scid, objectType) { // à revoir plus tard
+    let guildChannels = interaction.guild.channels.cache;
+    for (let [id, channel] of guildChannels) {
+        if (channel.type === objectType && channel.id === scid) {
+            return channel;
+        }
+    }
+    return null;
+}
