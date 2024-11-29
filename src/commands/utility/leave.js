@@ -1,7 +1,5 @@
 // Importation des modules nécessaires
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ChannelType} = require('discord.js');
-const fs = require('node:fs');
-const path = require('node:path');
 const { groups_users } = require('../../dbObjects.js');
 const { users } = require('../../dbObjects.js');
 
@@ -27,6 +25,7 @@ module.exports = {
         for (const group_user of findgroupsuser) {
             let channel = await findChannelId(interaction, group_user.group, ChannelType.GuildText);
             channel.permissionOverwrites.delete(interaction.user.id);
+            await emptyLicence(interaction, channel);
         }
         const finduserlicence = await users.findOne({ where: { discordid: interaction.user.id } });
         let category = await findChannelId(interaction, finduserlicence.licenceid, ChannelType.GuildCategory);
@@ -49,3 +48,18 @@ async function findChannelId(interaction, scid, objectType) { // à revoir plus 
     }
     return null;
 }
+
+async function emptyLicence(interaction, channel) {
+    //fait  avec ia pour l'instant pour mes tests
+    const allowedUsers = channel.permissionOverwrites.cache.filter(overwrite =>
+        overwrite.allow.has('ViewChannel') && overwrite.type === 'member'
+    ).map(overwrite => overwrite.id);
+
+    const membersWithAccess = allowedUsers.filter(userId => {
+        const member = channel.guild.members.cache.get(userId);
+        return member && channel.permissionsFor(member).has('ViewChannel');
+    });
+
+    console.log(membersWithAccess);
+}
+
