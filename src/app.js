@@ -2,6 +2,7 @@
 const path = require('node:path');
 const Sequelize = require('sequelize');
 const { Client, GatewayIntentBits } = require('discord.js');
+const cron = require('node-cron');
 require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 
 /**
@@ -11,7 +12,14 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
  */
 async function main() {
     // Créer une nouvelle instance du client Discord avec les intentions nécessaires
-    const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+    const client = new Client({
+        intents: [
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.MessageContent,
+            GatewayIntentBits.GuildMembers,
+        ],
+    });
 
     try {
         // Déployer les commandes, événements et base de données
@@ -27,7 +35,10 @@ async function main() {
         // Enregistrer et afficher les erreurs rencontrées lors de l'initialisation
         console.error('Erreur lors de l\'initialisation :', error);
     }
+
+    cron.schedule('* * * * 11 *', async () => {
+        require('./moodle-reminder')(client);
+    });
 }
 
-// Appeler la fonction principale pour démarrer le bot
-main();
+main()
