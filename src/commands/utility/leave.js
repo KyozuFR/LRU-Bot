@@ -38,9 +38,9 @@ module.exports = {
         await category.permissionOverwrites.delete(interaction.user.id);
         if (await empty){
             await category.delete();
+            await licences.update({ id: null }, { where: { id: category.id } });
         }
         await users.update({ licenceid: null }, { where: { discordid: interaction.user.id } });
-        await licences.update({ id: null }, { where: { id: category.id } });
         //await groups_users.destroy({where: {user: interaction.user.id}});
 
 
