@@ -2,6 +2,7 @@
 const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ChannelType} = require('discord.js');
 const { groups_users } = require('../../dbObjects.js');
 const { users } = require('../../dbObjects.js');
+const {licences, groups} = require("../../dbObjects");
 
 module.exports = {
     // Délai de rechargement de la commande en secondes
@@ -22,16 +23,25 @@ module.exports = {
         await interaction.deferReply({ ephemeral: true });
 
         const findgroupsuser = await groups_users.findAll({ where: { user: interaction.user.id } });
+        if (findgroupsuser.length === 0) {
+            await interaction.editReply(`Vous n'êtes pas dans un groupe`);
+            return;
+        }
+        let empty;
         for (const group_user of findgroupsuser) {
             let channel = await findChannelId(interaction, group_user.group, ChannelType.GuildText);
-            channel.permissionOverwrites.delete(interaction.user.id);
-            await emptyLicence(interaction, channel);
+            empty = emptyLicence(interaction, channel);
+            await group_user.destroy();
         }
         const finduserlicence = await users.findOne({ where: { discordid: interaction.user.id } });
         let category = await findChannelId(interaction, finduserlicence.licenceid, ChannelType.GuildCategory);
         await category.permissionOverwrites.delete(interaction.user.id);
+        if (await empty){
+            await category.delete();
+        }
         await users.update({ licenceid: null }, { where: { discordid: interaction.user.id } });
-        await groups_users.destroy({where: {user: interaction.user.id}});
+        await licences.update({ id: null }, { where: { id: category.id } });
+        //await groups_users.destroy({where: {user: interaction.user.id}});
 
 
 
@@ -48,18 +58,18 @@ async function findChannelId(interaction, scid, objectType) { // à revoir plus 
     }
     return null;
 }
-
 async function emptyLicence(interaction, channel) {
-    //fait  avec ia pour l'instant pour mes tests
-    const allowedUsers = channel.permissionOverwrites.cache.filter(overwrite =>
-        overwrite.allow.has('ViewChannel') && overwrite.type === 'member'
-    ).map(overwrite => overwrite.id);
-
-    const membersWithAccess = allowedUsers.filter(userId => {
-        const member = channel.guild.members.cache.get(userId);
-        return member && channel.permissionsFor(member).has('ViewChannel');
-    });
-
-    console.log(membersWithAccess);
+    //vérifier en bdd que la licence n'est associé a aucun utilisateur
+    const findgroupsuser = await groups_users.findAll({ where: { group: channel.id } });
+    if (findgroupsuser.length === 0) {
+        if (channel) {
+            channel.delete();
+            groups.destroy({where: {id: channel.id}});
+            return true;
+        }
+    } else {
+        channel.permissionOverwrites.delete(interaction.user.id);
+        return false;
+    }
 }
 
