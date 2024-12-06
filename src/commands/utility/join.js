@@ -110,13 +110,14 @@ async function createCategory(interaction, categoryName) {
             type: ChannelType.GuildCategory,
         });
 
-        fs.writeFile(path.resolve(__dirname, '../../../reset.txt'), category.id + ";", { flag: 'a+' }, err => {});
+
 
         category.permissionOverwrites.create(category.guild.roles.everyone, { ViewChannel: false });
     }
 
     category.permissionOverwrites.create(interaction.user, { ViewChannel: true });
 
+    await users.update({ licenceid: category.id }, { where: { discordid: interaction.user.id } });
     return category;
 }
 
@@ -135,7 +136,7 @@ async function createChannels(interaction, listOfChannel, categoryParent) {
                 parent: categoryParent.id,
             });
 
-            fs.writeFile(path.resolve(__dirname, '../../../reset.txt'), channel.id+";", { flag: 'a+' }, err => {});
+
 
             channel.permissionOverwrites.create(channel.guild.roles.everyone, { ViewChannel: false });
         }
