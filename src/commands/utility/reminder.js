@@ -35,33 +35,31 @@ module.exports = {
 
         await interaction.deferReply({ ephemeral: true });
 
-        let select = null;
-        let row = null;
-        let message = null;
-        let selectCollector = null;
-
-        switch (choice){
+        switch (choice) {
             case 0:
+                // Récupérer l'utilisateur de la base de données
                 const dbUser = await users.findOne({ where: { discordid: interaction.user.id } });
                 let moodleLink;
                 if (dbUser && dbUser.moodlelink) {
                     moodleLink = dbUser.moodlelink;
                 } else {
-                    await interaction.editReply('Veuillez d\'abord lier un lien moodle avec la commande /login.');
+                    await interaction.editReply('Veuillez d\'abord lier votre moodle avec la commande /login.');
                     return;
                 }
 
+                // Récupérer et convertir les données ICS
                 let calendarData;
                 try {
                     const icsData = await getIcsData(moodleLink);
                     calendarData = getJsonDataFromIcs(icsData, 1);
                 } catch (error) {
-                    console.error(`Error fetching ${choice === 0 ? 'Moodle' : 'EDT'} data:`, error);
-                    await interaction.editReply(`Impossible de récuperer votre ${choice === 0 ? 'agenda Moodle' : 'EDT'}.`);
+                    console.error(`Error fetching Moodle data:`, error);
+                    await interaction.editReply(`Impossible de récuperer votre agenda Moodle.`);
                     return;
                 }
 
-                select = new StringSelectMenuBuilder()
+                // Créer le menu de sélection pour les événements
+                const selectMenu = new StringSelectMenuBuilder()
                     .setCustomId('selectCourse')
                     .addOptions(
                         Object.keys(calendarData).map(index => {
@@ -71,16 +69,17 @@ module.exports = {
                                 .setValue(index);
                         })
                     );
-                row = new ActionRowBuilder()
-                    .addComponents(select);
-                message = await interaction.editReply({
+
+                const actionRow = new ActionRowBuilder().addComponents(selectMenu);
+                const selectMessage = await interaction.editReply({
                     content: 'Selectionnez un evenement pour ajouter un rappel:',
-                    components: [row],
+                    components: [actionRow],
                 });
 
-                selectCollector = message.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60_000 });
+                // Gérer les interactions du menu de sélection
+                const selectCollector = selectMessage.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60_000 });
                 selectCollector.on('collect', async i => {
-                    const selectedEvent = calendarData[i.values[0]][0]
+                    const selectedEvent = calendarData[i.values[0]][0];
                     await i.update({ content: `Cours selectionné: ${selectedEvent["categories"][0] + ": " + selectedEvent["summary"]}`, components: [] });
                     try {
                         await reminders.create({
@@ -94,10 +93,13 @@ module.exports = {
                     }
                 });
                 break;
-            case 1:
-                const remindersList = await reminders.findAll( { where: { discordid: interaction.user.id } });
 
-                select = new StringSelectMenuBuilder()
+            case 1:
+                // Récupérer la liste des rappels de l'utilisateur
+                const remindersList = await reminders.findAll({ where: { discordid: interaction.user.id } });
+
+                // Créer le menu de sélection pour les rappels
+                const removeSelectMenu = new StringSelectMenuBuilder()
                     .setCustomId('selectCourse')
                     .addOptions(
                         remindersList.map((reminder, index) => {
@@ -107,18 +109,18 @@ module.exports = {
                                 .setValue(index.toString());
                         })
                     );
-                row = new ActionRowBuilder()
-                    .addComponents(select);
-                message = await interaction.editReply({
+
+                const removeActionRow = new ActionRowBuilder().addComponents(removeSelectMenu);
+                const removeMessage = await interaction.editReply({
                     content: 'Selectionnez le rappel à supprimer',
-                    components: [row],
+                    components: [removeActionRow],
                 });
 
-                selectCollector = message.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60_000 });
-                selectCollector.on('collect', async i => {
+                // Gérer les interactions du menu de sélection
+                const removeCollector = removeMessage.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60_000 });
+                removeCollector.on('collect', async i => {
                     const selectedEvent = remindersList[i.values[0]].dataValues;
-
-                    await i.update({ content: `Cours selectionné: ${selectedEvent["nom"] + ": " + selectedEvent["description"]}`, components: [] });
+                    await i.update({ content: `Cours selectionné: '${selectedEvent["nom"]}': '${selectedEvent["description"]}'`, components: [] });
                     await reminders.destroy({
                         where: {
                             discordid: interaction.user.id,
