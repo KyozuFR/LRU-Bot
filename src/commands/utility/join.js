@@ -128,25 +128,8 @@ async function createChannels(interaction, listOfChannel, categoryParent) {
             .replace(/[\u0300-\u036f]/g, '') // Supprime les accents
             .replace(/[^a-z0-9_]+/g, '-') // Remplace tout ce qui n'est pas alphanumérique ou underscore par un tiret
             .replace(/^-+|-+$/g, '');// Supprime les tirets en début et en fin de chaîne
-        let channel = await findChannelFromName(interaction, newChannelName, ChannelType.GuildText, categoryParent);
-        if (!channel) {
-            channel = await interaction.guild.channels.create({
-                name: newChannelName,
-                type: ChannelType.GuildText,
-                parent: categoryParent.id,
-            });
-
-
-
-            channel.permissionOverwrites.create(channel.guild.roles.everyone, { ViewChannel: false });
-        }
-
-        channel.permissionOverwrites.create(interaction.user, { ViewChannel: true });
-        await groups_users.create({ user: interaction.user.id, group: channel.id });
-        const existingGroup = await groups.findOne({ where: { id: channel.id } });
-        if (!existingGroup) {
-            await groups.create({id: channel.id, name: newChannelName});
-        }
+        //mis dans une fonction async pour que tous les channels se crée en même temps
+        createChannel(interaction, newChannelName, categoryParent);
     }
 }
 
@@ -200,4 +183,26 @@ async function getStudentCourses(url) {
         }
     }
     return tabcours;
+}
+
+async function createChannel(interaction, newChannelName, categoryParent) {
+    let channel = await findChannelFromName(interaction, newChannelName, ChannelType.GuildText, categoryParent);
+    if (!channel) {
+        channel = await interaction.guild.channels.create({
+            name: newChannelName,
+            type: ChannelType.GuildText,
+            parent: categoryParent.id,
+        });
+
+
+
+        channel.permissionOverwrites.create(channel.guild.roles.everyone, { ViewChannel: false });
+    }
+
+    channel.permissionOverwrites.create(interaction.user, { ViewChannel: true });
+    await groups_users.create({ user: interaction.user.id, group: channel.id });
+    const existingGroup = await groups.findOne({ where: { id: channel.id } });
+    if (!existingGroup) {
+        await groups.create({id: channel.id, name: newChannelName});
+    }
 }
