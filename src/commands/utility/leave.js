@@ -1,5 +1,5 @@
 // Importation des modules nécessaires
-const { ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ChannelType} = require('discord.js');
+const { SlashCommandBuilder, ChannelType} = require('discord.js');
 const { groups_users } = require('../../dbObjects.js');
 const { users } = require('../../dbObjects.js');
 const {licences, groups} = require("../../dbObjects");
@@ -28,6 +28,7 @@ module.exports = {
             return;
         }
         let empty;
+        await interaction.editReply(`Leave en cours`);
         for (const group_user of findgroupsuser) {
             let channel = await findChannelId(interaction, group_user.group, ChannelType.GuildText);
             empty = emptyLicence(interaction, channel);
@@ -44,8 +45,10 @@ module.exports = {
         //await groups_users.destroy({where: {user: interaction.user.id}});
 
 
-
-        await interaction.editReply(`Groupe supprimé`);
+        // console.log(findChannelId(interaction,interaction.channelId,ChannelType.GuildText));
+        // if (findChannelId(interaction,interaction.channelId,ChannelType.GuildText)){
+        //     await interaction.editReply(`Leave terminé`);
+        // }
     },
 };
 
