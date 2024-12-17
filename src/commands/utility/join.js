@@ -94,7 +94,7 @@ async function handleYearSelection(interaction, licenceName, licenceYear) {
     const user = await users.findOne({ where: { discordid: interaction.user.id } });
     let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
     let newCategory = await createCategory(interaction, licenceYear + " - " + licenceName);
-    await createChannel(interaction,'General', newCategory);
+    createChannel(interaction,'General', newCategory);
     await licences.update(
         { id: newCategory.id },
         { where: { name: licenceName, year: licenceYear.slice(-1) } }
