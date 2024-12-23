@@ -10,7 +10,7 @@ module.exports = {
     // Données et options de la commande
     data: new SlashCommandBuilder()
         .setName('join')
-        .setDescription('.'),
+        .setDescription('Permet de rejoindre un groupe.'),
 
     /**
      * Logique d'exécution de la commande.

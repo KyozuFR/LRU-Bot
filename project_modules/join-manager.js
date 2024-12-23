@@ -5,7 +5,11 @@ const {getIcsData} = require("./ics-manager");
 async function join(interaction, userused) {
     const user = await users.findOne({ where: { discordid: userused.id } });
     if (!user) {
-        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
+        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login en selectionant edt.');
+        return;
+    }
+    if (!user.lruid) {
+        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login en selectionant edt.');
         return;
     }
     if (await groups_users.findOne({ where: { user: userused.id } })) {
