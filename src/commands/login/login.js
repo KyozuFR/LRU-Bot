@@ -1,7 +1,6 @@
 // Importation des modules nécessaires
 const { SlashCommandBuilder } = require('discord.js');
 const {login} = require("../../../project_modules/login-manager");
-const { users } = require('../../dbObjects.js')
 
 module.exports = {
     // Délai de rechargement de la commande en secondes
@@ -27,7 +26,7 @@ module.exports = {
 
     /**
      * Exécute la commande de login pour enregistrer un calendrier Moodle ou EDT.
-     * @param {CommandInteraction} interaction - L'interaction de commande provenant de Discord.
+     * @param {Interaction} interaction - L'interaction de commande provenant de Discord.
      * @returns {Promise<void>}
      */
     async execute(interaction) {

@@ -2,16 +2,30 @@ const {users, groups_users, licences, groups} = require("../src/dbObjects");
 const {StringSelectMenuBuilder, StringSelectMenuOptionBuilder, ActionRowBuilder, ComponentType, ChannelType} = require("discord.js");
 const {getIcsData} = require("./ics-manager");
 
+/**
+ * Fonction pour assigner un utilisateur à un groupe
+ * @param {Interaction.user} userused - le user qui va être login.
+ * @param {Interaction} interaction - Gestion intéraction avec discord.
+ * @throws {Error} - Si la récupération ou le parsing des données échoue.
+ */
 async function join(interaction, userused) {
+
+    // Vérification de connexion
     const user = await users.findOne({ where: { discordid: userused.id } });
     if (!user) {
-        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
+        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login en selectionant edt.');
+        return;
+    }
+    if (!user.lruid) {
+        await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login en selectionant edt.');
         return;
     }
     if (await groups_users.findOne({ where: { user: userused.id } })) {
         await interaction.editReply('Vous êtes déjà associé à un groupe.');
         return;
     }
+
+    //Création du premier menu
     const select = new StringSelectMenuBuilder()
         .setCustomId('selectLicence')
         .addOptions(
@@ -24,6 +38,7 @@ async function join(interaction, userused) {
         );
 
 
+    //affichage du premier menu
     const row = new ActionRowBuilder()
         .addComponents(select);
     const message = await interaction.editReply({
@@ -31,14 +46,16 @@ async function join(interaction, userused) {
         components: [row],
     });
 
-    //en haut ça fonctionne
 
+    //Attente de la selection de la licence
     const selectCollector = message.createMessageComponentCollector({ componentType: ComponentType.StringSelect, time: 60_000 });
     let licenceName;
     let licenceYear;
     selectCollector.on('collect', async i => {
+        //Le collecteur écoute les réponses de l'utilisateur et les traite selon l'id du menu
         if (i.customId === 'selectLicence') {
             licenceName = i.values[0];
+            //Création du deuxième menu
             const select2 = new StringSelectMenuBuilder()
                 .setCustomId('selectYear')
                 .addOptions(
@@ -52,6 +69,8 @@ async function join(interaction, userused) {
                         .setLabel('L3')
                         .setValue('L3'),
                 );
+
+            //affichage du deuxième menu
             const row2 = new ActionRowBuilder()
                 .addComponents(select2);
             await i.update({ content: `Licence sélectionnée : ${licenceName}`, components: [row2] });
@@ -59,14 +78,26 @@ async function join(interaction, userused) {
         if (i.customId === 'selectYear') {
             licenceYear = i.values[0];
             await i.update({ content: `Vous êtes en : ${licenceYear} ${licenceName}`, components: [] });
+            //Traitement des données saisi par l'utilisateur
             await handleYearSelection(interaction, licenceName, licenceYear, userused);
         }
     });
 }
+
+/**
+ * Fonction réalisé après la selection de la licence et de l'année afin d'assigner l'utilisateur à un groupe
+ * @param {Interaction} interaction - Gestion intéraction avec discord.
+ * @param {string} licenceName - le nom de la licence.
+ * @param {string} licenceYear - l'année de la licence.
+ * @param {Interaction.user} userused - le user qui va être login.
+ * @throws {Error} - Si la récupération ou le parsing des données échoue.
+ */
 async function handleYearSelection(interaction, licenceName, licenceYear, userused) {
-    // Votre logique ici
+    //Récupération des données nécessaires
     const user = await users.findOne({ where: { discordid: userused.id } });
     let list_group = await getStudentCourses(`https://apps.univ-lr.fr/cgi-bin/WebObjects/ServeurPlanning.woa/wa/ics?login=${user.lruid}`);
+
+    //Création de la catégorie et des channels si il n'éxiste pas
     let newCategory = await createCategory(interaction, licenceYear + " - " + licenceName, userused);
     createChannel(interaction,'General', newCategory, userused);
     await licences.update(
@@ -77,6 +108,13 @@ async function handleYearSelection(interaction, licenceName, licenceYear, userus
 
     await interaction.editReply(`Groupe assigné`);
 }
+
+/**
+ * Fonction de création de catégorie si elle n'existe pas
+ * @param {Interaction} interaction - Gestion intéraction avec discord.
+ * @param {string} categoryName - le nom de la catégorie.
+ * @param {Interaction.user} userused - le user qui va être login.
+ */
 async function createCategory(interaction, categoryName, userused) {
     let category = await findChannelFromName(interaction, categoryName, ChannelType.GuildCategory);
     if (!category) {
@@ -96,6 +134,15 @@ async function createCategory(interaction, categoryName, userused) {
     return category;
 }
 
+
+/**
+ * Fonction de création de channels si ils n'existent pas
+ * @param {Interaction} interaction - Gestion intéraction avec discord.
+ * @param {Object} listOfChannel - liste des channels à créer.
+ * @param {Channel} categoryParent - la catégorie parente.
+ * @param {Interaction.user} userused - le user qui va être login.
+ * @throws {Error} - Si la récupération ou le parsing des données échoue.
+ */
 async function createChannels(interaction, listOfChannel, categoryParent, userused) {
     for (let [course, group] of Object.entries(listOfChannel)) {
         let newChannelName = `${group}-${course}`.toLowerCase() // Met en minuscule
@@ -108,6 +155,15 @@ async function createChannels(interaction, listOfChannel, categoryParent, userus
     }
 }
 
+
+/**
+ * Fonction pour trouver un channel par son nom
+ * @param {Interaction} interaction - Gestion intéraction avec discord.
+ * @param {string} name - le nom du channel.
+ * @param {ChannelType} objectType - le type de channel.
+ * @param {Channel} categoryParent - la catégorie parente.
+ * @throws {Error} - Si la récupération ou le parsing des données échoue.
+ */
 async function findChannelFromName(interaction, name, objectType, categoryParent = interaction.guild) { // à revoir plus tard
     let guildChannels = interaction.guild.channels.cache;
     for (let [id, channel] of guildChannels) {
@@ -122,7 +178,14 @@ async function findChannelFromName(interaction, name, objectType, categoryParent
     return null;
 }
 
+
+/**
+ * Fonction pour récupérer les cours de l'étudiant
+ * @param {string} url - le lien de l'EDT.
+ * @throws {Error} - Si la récupération ou le parsing des données échoue.
+ */
 async function getStudentCourses(url) {
+    //Pitié, ne pas toucher a la gestion du regex
     let calendarData;
     try {
         calendarData = await getIcsData(url);
@@ -160,6 +223,14 @@ async function getStudentCourses(url) {
     return tabcours;
 }
 
+/**
+ * Fonction créant un channel si il n'existe pas
+ * @param {Interaction} interaction - Gestion intéraction avec discord.
+ * @param {string} newChannelName - le nom du channel.
+ * @param {Channel} categoryParent - la catégorie parente.
+ * @param {Interaction.user} userused - le user qui va être login.
+ * @throws {Error} - Si la récupération ou le parsing des données échoue.
+ */
 async function createChannel(interaction, newChannelName, categoryParent, userused) {
     let channel = await findChannelFromName(interaction, newChannelName, ChannelType.GuildText, categoryParent);
     if (!channel) {
