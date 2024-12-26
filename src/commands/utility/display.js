@@ -28,6 +28,12 @@ module.exports = {
         if (!user) {
             await interaction.editReply('Veuillez d\'abord vous connecter avec la commande /login.');
             return;
+        } else if (choice === 0 && !user.moodlelink) {
+            await interaction.editReply('Veuillez d\'abord vous connecter à Moodle avec la commande /login.');
+            return;
+        } else if (choice === 1 && !user.lruid) {
+            await interaction.editReply('Veuillez d\'abord vous connecter à l\'EDT avec la commande /login.');
+            return;
         }
 
         // Détermine l'URL du calendrier selon le choix
