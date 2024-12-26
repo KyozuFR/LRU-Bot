@@ -90,7 +90,7 @@ function createEmbed(title, jsonData, getFieldFunction, page, start) {
 // Fonction pour formater les données Moodle
 function getFieldsMoodle(jsonData, page) {
     return jsonData[page].map(event => ({
-        name: String(event.end),
+        name: event.end.getDate() + '/' + event.end.getMonth() +1 + '/' + event.end.getFullYear() + ' ' + event.end.getHours() + ':' + event.end.getMinutes(),
         value: `**${event.categories}** : ${event.summary}`,
         inline: false
     }));
@@ -99,7 +99,7 @@ function getFieldsMoodle(jsonData, page) {
 // Fonction pour formater les données EDT
 function getFieldsEDT(jsonData, page) {
     return jsonData[page].map(event => ({
-        name: String(event.start),
+        name: event.start.getDate() + '/' + event.start.getMonth() +1 + '/' + event.start.getFullYear() + ' ' + event.start.getHours() + ':' + event.start.getMinutes(),
         value: `${event.summary}`,
         inline: false
     }));
