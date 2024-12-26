@@ -185,6 +185,7 @@ async function findChannelFromName(interaction, name, objectType, categoryParent
  * @throws {Error} - Si la récupération ou le parsing des données échoue.
  */
 async function getStudentCourses(url) {
+    //Pitié, ne pas toucher a la gestion du regex
     let calendarData;
     try {
         calendarData = await getIcsData(url);
