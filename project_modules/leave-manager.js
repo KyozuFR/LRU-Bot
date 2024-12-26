@@ -7,6 +7,8 @@ const { ChannelType } = require("discord.js");
  * @param {User} user - L'utilisateur qui quitte le groupe.
  */
 async function leave(interaction, user) {
+
+    //On vérifie si l'utilisateur est dans un groupe
     const userGroups = await groups_users.findAll({ where: { user: user.id } });
     if (userGroups.length === 0) {
         await interaction.editReply(`Vous n'êtes pas dans un groupe`);
@@ -15,20 +17,26 @@ async function leave(interaction, user) {
     //is empty permet de savoir si la licence est vide afin de la supprimer
     let isEmpty = false;
     await interaction.editReply(`Leave en cours`);
+
+    //On supprime l'utilisateur de tous les groupes et on supprime les groupes si il sont vides
     for (const groupUser of userGroups) {
         const channel = await findChannelById(interaction, groupUser.group, ChannelType.GuildText);
         await groupUser.destroy();
-        isEmpty = handleEmptyLicence(interaction, channel, user);
+        isEmpty = handleEmptyGroup(interaction, channel, user);
     }
+
 
     const userLicence = await users.findOne({ where: { discordid: user.id } });
     const category = await findChannelById(interaction, userLicence.licenceid, ChannelType.GuildCategory);
     await category.permissionOverwrites.delete(user.id);
 
+    //Suppression de la Catégorie si plus personne n'est  dans la licence.
     if (await isEmpty) {
         await category.delete();
         await licences.update({ id: null }, { where: { id: category.id } });
     }
+
+    //RAPPEL une même licence peut avoir des groupes scindé tp1 tp2 tp3, il est donc important de vérifier indépendamment si la licence est vide et si les Groupes sont vide.
 
     await users.update({ licenceid: null }, { where: { discordid: user.id } });
 }
@@ -57,7 +65,7 @@ async function findChannelById(interaction, channelId, channelType) {
  * @param {User} user - L'utilisateur à vérifier.
  * @returns {boolean} - True si la licence est vide, sinon false.
  */
-async function handleEmptyLicence(interaction, channel, user) {
+async function handleEmptyGroup(interaction, channel, user) {
     const groupUsers = await groups_users.findAll({ where: { group: channel.id } });
     if (groupUsers.length === 0) {
         if (channel) {
