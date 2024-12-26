@@ -12,12 +12,13 @@ async function leave(interaction, user) {
         await interaction.editReply(`Vous n'êtes pas dans un groupe`);
         return;
     }
+    //is empty permet de savoir si la licence est vide afin de la supprimer
     let isEmpty = false;
     await interaction.editReply(`Leave en cours`);
     for (const groupUser of userGroups) {
         const channel = await findChannelById(interaction, groupUser.group, ChannelType.GuildText);
-        isEmpty = handleEmptyLicence(interaction, channel, user);
         await groupUser.destroy();
+        isEmpty = handleEmptyLicence(interaction, channel, user);
     }
 
     const userLicence = await users.findOne({ where: { discordid: user.id } });
