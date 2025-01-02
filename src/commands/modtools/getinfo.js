@@ -25,13 +25,24 @@ module.exports = {
             await interaction.editReply('Cet utilisateur n\'est pas enregistré.');
             return;
         }
-        const regexTd = /td[^-]+/;
-        const regexTp = /tp[^-]+/;
+        let licencesUserName = null;
+        let licencesYear = null;
+        if (user.licenceid) {
+            let licencesUser = await licences.findOne({where: {id: user.licenceid}});
+            licencesUserName = licencesUser.name;
+            licencesYear = licencesUser.year;
+        }
+        let strGroup = "";
+        for (groups_user of await groups_users.findAll({where: {user: user.discordid}})) {
+            let group = await groups.findOne({where: {id: groups_user.group}});
+            strGroup += `- ${group.name} \n`;}
         await interaction.editReply(`Informations de ${target.username}:
         - ID Discord: ${user.discordid}
         - ID LR: ${user.lruid}
         - Lien Moodle: ${user.moodlelink}
-        - Licence: ${licences.findAll({where: {id: user.licenceid}}).name} en L ${licences.findAll({where: {id: user.licenceid}}).year}`);
+        - Licence: ${licencesUserName} en L ${licencesYear}
+        - Groupes:\n${strGroup}`);
+
    /**  - Groupe TP: ${groups.findOne({where: {id: groups_users.findOne({where: {user: target.id}}).group}}).name}
         - Groupe TD: ${groups.findOne({where: {id: groups_users.findOne({where: {user: user.id}}).group}}).name}**/
     },
