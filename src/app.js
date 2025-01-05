@@ -11,7 +11,7 @@ require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
  */
 async function main() {
     // Créer une nouvelle instance du client Discord avec les intentions nécessaires
-    const client = new Client({ intents: [GatewayIntentBits.Guilds] });
+    const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent, GatewayIntentBits.GuildMembers] });
 
     try {
         // Déployer les commandes, événements et base de données

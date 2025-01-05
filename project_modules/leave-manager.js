@@ -6,17 +6,17 @@ const { ChannelType } = require("discord.js");
  * @param {Interaction} interaction - L'objet interaction de Discord.js.
  * @param {User} user - L'utilisateur qui quitte le groupe.
  */
-async function leave(interaction, user) {
+async function leave(user, interaction) {
 
     //On vérifie si l'utilisateur est dans un groupe
     const userGroups = await groups_users.findAll({ where: { user: user.id } });
     if (userGroups.length === 0) {
-        await interaction.editReply(`Vous n'êtes pas dans un groupe`);
+        await handleInteractionReply(interaction, "Vous n'êtes pas dans un groupe.");
         return;
     }
     //is empty permet de savoir si la licence est vide afin de la supprimer
     let isEmpty = false;
-    await interaction.editReply(`Leave en cours`);
+    handleInteractionReply(interaction, "Leave en cours.");
 
     //On supprime l'utilisateur de tous les groupes et on supprime les groupes si il sont vides
     for (const groupUser of userGroups) {
@@ -76,6 +76,14 @@ async function handleEmptyGroup(interaction, channel, user) {
     } else {
         await channel.permissionOverwrites.delete(user.id);
         return false;
+    }
+}
+
+async function handleInteractionReply(interaction, message) {
+    if (interaction) {
+        await interaction.editReply('te');
+    } else {
+        console.log(message);
     }
 }
 
