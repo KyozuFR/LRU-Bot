@@ -18,7 +18,9 @@ module.exports = {
                     { name: 'login', value: 0 },
                     { name: 'display', value: 1 },
                     { name: 'join', value: 2 },
-                    { name: 'ping', value: 3 },
+                    { name: 'leave', value: 3 },
+                    { name: 'getinfo', value: 4 },
+                    { name: 'ping', value: 5 },
                 )),
     /**
      * Logique d'exécution de la commande.
@@ -51,14 +53,12 @@ module.exports = {
                 fields = [{ name: 'Utilisation', value: '/login ‹methode› ‹identifiant›'},
                     { name: 'Methode', value: 'moodle - ent'},
                     { name: 'Cooldown', value: '1s', inline: true },
-                    { name: 'Permissions', value: 'Aucune', inline: true }];
+                    { name: 'Permissions', value: 'Aucune', inline: true },
+                    { name: 'Version Admin', value: '/forcelogin ‹cible› ‹methode› ‹identifiant›' },
+                    { name: 'Permissions', value: 'Gestion des rôles ', inline: true }];
                 images = [
                     { path: path.resolve(__dirname, '../../../assets/help/identifiantEnt.png'), attachement: "attachment://identifiantEnt.png", title: "Récupération de l'identifiant ENT"},
-                    { path: path.resolve(__dirname, '../../../assets/help/LienMoodle1.png'), attachement: "attachment://LienMoodle1.png", title: "Récupération du lien Moodle : Étape 1"},
-                    { path: path.resolve(__dirname, '../../../assets/help/LienMoodle2.png'), attachement: "attachment://LienMoodle2.png", title: "Récupération du lien Moodle : Étape 2"},
-                    { path: path.resolve(__dirname, '../../../assets/help/LienMoodle3.png'), attachement: "attachment://LienMoodle3.png", title: "Récupération du lien Moodle : Étape 3"},
-                    { path: path.resolve(__dirname, '../../../assets/help/LienMoodle4.png'), attachement: "attachment://LienMoodle4.png", title: "Récupération du lien Moodle : Étape 4"},
-                    { path: path.resolve(__dirname, '../../../assets/help/LienMoodle5.png'), attachement: "attachment://LienMoodle5.png", title: "Récupération du lien Moodle : Étape 5"},
+                    { path: path.resolve(__dirname, '../../../assets/help/LienMoodle.gif'), attachement: "attachment://LienMoodle.gif", title: "Récupération du lien Moodle"},
                 ]
 
                 curPage = 1;
@@ -97,12 +97,28 @@ module.exports = {
 
             case 2:
                 title = "Manuel de la commande /join :";
-                description = "Permet de rejoindre tes groupes";
+                description = "Permet de rejoindre les groupes automatiquement";
                 fields = [
-                    { name: 'Utilisation', value: '/join ‹licence› ‹année›' },
-                    { name: 'Année', value: 'L1 - L2 - L3'},
+                    { name: 'Utilisation', value: '/join ' },
                     { name: 'Cooldown', value: '5s', inline: true },
-                    { name: 'Permissions', value: 'Aucune', inline: true }
+                    { name: 'Permissions', value: 'Aucune', inline: true },
+                    { name: 'Version Admin', value: '/forcejoin ‹cible›' },
+                    { name: 'Permissions', value: 'Gestion des rôles', inline: true },
+                ];
+
+                response = await interaction.editReply({
+                    embeds: [createEmbed(title, description, fields, start)]
+                });
+                break;
+            case 3:
+                title = "Manuel de la commande /leave :";
+                description = "Permet de quitter les groupes automatiquement";
+                fields = [
+                    { name: 'Utilisation', value: '/leave ' },
+                    { name: 'Cooldown', value: '5s', inline: true },
+                    { name: 'Permissions', value: 'Aucune', inline: true },
+                    { name: 'Version Admin', value: '/forceleave ‹cible›' },
+                    { name: 'Permissions', value: 'Gestion des rôles', inline: true },
                 ];
 
                 response = await interaction.editReply({
@@ -110,7 +126,22 @@ module.exports = {
                 });
                 break;
 
-            case 3:
+            case 4:
+                title = "Manuel de la commande /getinfo :";
+                description = "Permet de vérifier les informationde la personne cible de la commande.\n" +
+                    "Seule la personne ayant lancé la commande peut voir la réponse.";
+                fields = [
+                    { name: 'Utilisation', value: '/getinfo ‹cible›' },
+                    { name: 'Cooldown', value: '0s', inline: true },
+                    { name: 'Permissions', value: 'Gestion des rôles', inline: true },
+                ];
+
+                response = await interaction.editReply({
+                    embeds: [createEmbed(title, description, fields, start)]
+                });
+                break;
+
+            case 5:
                 title = "Manuel de la commande /ping :";
                 description = "Permet de vérifier si le bot est en ligne et son temps de réaction.\n" +
                     "Seule la personne ayant lancé la commande peut voir la réponse.";
