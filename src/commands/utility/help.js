@@ -128,7 +128,7 @@ module.exports = {
 
             case 4:
                 title = "Manuel de la commande /getinfo :";
-                description = "Permet de vérifier les informationde la personne cible de la commande.\n" +
+                description = "Permet de vérifier les information de la personne cible de la commande.\n" +
                     "Seule la personne ayant lancé la commande peut voir la réponse.";
                 fields = [
                     { name: 'Utilisation', value: '/getinfo ‹cible›' },
