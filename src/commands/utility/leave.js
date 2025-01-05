@@ -1,6 +1,6 @@
 // Importation des modules nécessaires
-const {SlashCommandBuilder} = require('discord.js');
-const {join} = require("../../../project_modules/join-manager");
+const { SlashCommandBuilder} = require('discord.js');
+const {leave} = require('../../../project_modules/leave-manager');
 
 module.exports = {
     // Délai de rechargement de la commande en secondes
@@ -9,15 +9,17 @@ module.exports = {
     category: 'utility',
     // Données et options de la commande
     data: new SlashCommandBuilder()
-        .setName('join')
-        .setDescription('Permet de rejoindre un groupe.'),
+        .setName('leave')
+        .setDescription('Quitte le groupe'),
 
     /**
      * Logique d'exécution de la commande.
      * @param {Interaction} interaction - L'objet interaction de Discord.js
      */
     async execute(interaction) {
+        // Différer la réponse à l'interaction
         await interaction.deferReply({ ephemeral: true });
-        join(interaction, interaction.user);
+        leave(interaction, interaction.user);
     },
 };
+
