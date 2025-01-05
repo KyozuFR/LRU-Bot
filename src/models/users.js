@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
         // Champ 'moodlelink' de type TEXT
         moodlelink: Sequelize.TEXT,
         licenceid: {
-            type: Sequelize.INTEGER,
+            type: Sequelize.STRING,
             foreignKey: true,
         }
     }, {
