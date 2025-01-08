@@ -15,6 +15,7 @@ const licences = require('./models/licences.js')(sequelize, Sequelize.DataTypes)
 const users = require('./models/users.js')(sequelize, Sequelize.DataTypes);
 const groups = require('./models/groups.js')(sequelize, Sequelize.DataTypes);
 const groups_users = require('./models/groups_users.js')(sequelize, Sequelize.DataTypes);
+const reminders = require('./models/reminders.js')(sequelize, Sequelize.DataTypes);
 
 // Exporter le modèle users pour l'utiliser dans d'autres parties de l'application
-module.exports = { users, groups, groups_users, licences, sequelize };
+module.exports = { users, groups, groups_users, licences, reminders, sequelize };
