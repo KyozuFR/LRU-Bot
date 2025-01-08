@@ -40,7 +40,7 @@ async function updateEdt(argument, userId, interaction) {
             throw new Error(`Failed to fetch data. Response status: ${response.status}`);
         }
     } catch {
-        await interaction.editReply('Identifiant edt non valide.');
+        await interaction.editReply('Identifiant EDT non valide ou privé (vérifiez sur https://espelette.calypso.univ-lr.fr/mon-planning).');
         return null;
     }
 }
